@@ -36,6 +36,18 @@ class Check:
     critical: bool = True
 
 
+def _quiet_logs() -> None:
+    """Suppress DEBUG/INFO chatter (loguru + stdlib) so preflight output is clean."""
+    import logging
+    logging.getLogger().setLevel(logging.WARNING)
+    try:
+        from loguru import logger as _lg
+        _lg.remove()
+        _lg.add(sys.stderr, level="WARNING")
+    except Exception:  # noqa: BLE001
+        pass
+
+
 # -- Preflight checks ----------------------------------------------------------
 
 def check_python() -> Check:
@@ -131,14 +143,32 @@ def check_prefect_config() -> Check:
 
 
 def check_alpaca() -> Check:
+    import asyncio
+
     from src.config.settings import get_settings
     s = get_settings()
-    is_paper = "paper" in s.alpaca_base_url
-    have_keys = bool(s.alpaca_api_key and s.alpaca_secret_key)
-    if not is_paper:
+    if "paper" not in s.alpaca_base_url:
         return Check("alpaca (paper)", False, f"base_url not paper: {s.alpaca_base_url}")
-    detail = "paper endpoint, keys set" if have_keys else "paper endpoint, KEYS MISSING (set to trade)"
-    return Check("alpaca (paper)", True, detail, critical=False)
+    if not (s.alpaca_api_key and s.alpaca_secret_key):
+        return Check("alpaca (paper)", True,
+                     "paper endpoint, KEYS MISSING (set to trade)", critical=False)
+
+    from src.services.alpaca.client import AlpacaClient
+
+    async def _acct():
+        c = AlpacaClient(api_key=s.alpaca_api_key, secret_key=s.alpaca_secret_key,
+                         base_url=s.alpaca_base_url, is_paper=True)
+        return await c.get_account()
+
+    try:
+        a = asyncio.run(_acct())
+        cash = float(a.get("cash", 0) or 0)
+        status = str(a.get("status", "")).replace("AccountStatus.", "")
+        return Check("alpaca (paper)", True,
+                     f"connected acct {a['account_number']} {status} cash=${cash:,.0f}")
+    except Exception as e:  # noqa: BLE001
+        return Check("alpaca (paper)", False,
+                     f"auth failed: {type(e).__name__}: {e}", critical=False)
 
 
 PREFLIGHT = [
@@ -265,6 +295,7 @@ def main() -> int:
                     help=f"which services to start (default: all - {', '.join(SERVICES)})")
     up.add_argument("--skip-checks", action="store_true", help="skip preflight checks")
     args = parser.parse_args()
+    _quiet_logs()
 
     command = args.command or "check"
 
