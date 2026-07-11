@@ -225,9 +225,14 @@ def _start_prefect(env, s) -> "subprocess.Popen | None":  # noqa: F821
         print(f"[skip] Prefect already healthy at {api}")
         return None
     print(f"[start] Prefect server -> {api}")
-    # No stdin: if Prefect ever tries to prompt interactively, it gets EOF and
-    # fails fast instead of hanging `up`.
-    p = subprocess.Popen(["prefect", "server", "start"], env=env,
+    # Start the server WITHOUT PREFECT_API_URL in its env. That var is for
+    # clients; when it's set, `prefect server start` runs a client/server address
+    # check and, in an interactive terminal, blocks on a "profile mismatch"
+    # prompt. The server binds via PREFECT_SERVER_API_HOST/PORT (still set).
+    server_env = dict(env)
+    server_env.pop("PREFECT_API_URL", None)
+    # No stdin either, as a belt-and-suspenders against any other prompt.
+    p = subprocess.Popen(["prefect", "server", "start"], env=server_env,
                          stdin=subprocess.DEVNULL)
     for _ in range(40):
         if _prefect_healthy(api):

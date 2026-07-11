@@ -67,6 +67,11 @@ def main(argv: list[str]) -> int:
         print("usage: uv run scripts/run_prefect.py <prefect args...>")
         return 2
     env = build_env()
+    # `prefect server start` prompts about a client/server address mismatch when
+    # PREFECT_API_URL is set. That var is for clients; drop it for the server so
+    # it starts non-interactively (it binds via PREFECT_SERVER_API_HOST/PORT).
+    if argv[:2] == ["server", "start"]:
+        env.pop("PREFECT_API_URL", None)
     (REPO_ROOT / ".prefect").mkdir(exist_ok=True)
     return subprocess.run(["prefect", *argv], env=env).returncode
 
