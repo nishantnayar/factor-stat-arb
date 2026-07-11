@@ -53,12 +53,12 @@ def build_env() -> dict:
     env["PREFECT_HOME"] = str(REPO_ROOT / ".prefect")
     env["PREFECT_API_URL"] = api_url
     env["PREFECT_API_DATABASE_CONNECTION_URL"] = s.prefect_db_connection_url
-    # Bind the server to this repo's port (loopback only).
-    env["PREFECT_SERVER_API_HOST"] = "127.0.0.1"
+    # Bind the server to the SAME host as PREFECT_API_URL. If these differ
+    # (e.g. server on 127.0.0.1 but URL says localhost) `prefect server start`
+    # reports a mismatch and blocks on an interactive prompt.
+    env["PREFECT_SERVER_API_HOST"] = host
     env["PREFECT_SERVER_API_PORT"] = port
     env["PREFECT_UI_API_URL"] = api_url
-    # Note: server binds to 127.0.0.1; host var above is informational.
-    _ = host
     return env
 
 
