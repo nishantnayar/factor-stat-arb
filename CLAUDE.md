@@ -1,76 +1,135 @@
-# CLAUDE.md - Trading System
+# CLAUDE.md - Factor Stat Arb
 
 ## Project
 
-Algorithmic pairs trading platform. Paper trading via Alpaca. PostgreSQL + Redis + Prefect + Streamlit + FastAPI.
+Explainable factor-residual statistical arbitrage on US equities. PCA factor
+decomposition -> tradable ETF proxy mapping -> OU residual mean-reversion ->
+signal -> backtest -> explainability -> paper execution. Forked from
+`trading-system` for its data/execution/risk infrastructure, then trimmed and
+extended. Paper trading only via Alpaca. PostgreSQL + Prefect + Streamlit.
 
 **Author**: Nishant Nayar
-**Repo**: https://github.com/nishantnayar/trading-system
+**Repo**: https://github.com/nishantnayar/factor-stat-arb
+**Full design + build plan**: `docs/PROJECT_SPEC.md`
+
+---
+
+## Environment
+
+- Managed entirely with **uv** (Python 3.11, pinned via `.python-version`).
+- Install / sync: `uv sync`. Run anything: `uv run <cmd>`.
+- Do NOT use pip/conda/venv directly. `uv.lock` is committed - keep it in sync.
+- Verify the environment: `uv run scripts/check_env.py`.
+
+---
+
+## Entry Point
+
+`main.py` is the single entry point:
+
+```bash
+uv run main.py check          # run all preflight validation checks
+uv run main.py up             # checks, then start ALL services (Prefect + Streamlit)
+uv run main.py up prefect     # start only the named service(s)
+uv run main.py up --skip-checks
+```
 
 ---
 
 ## Encoding Rules
 
-- All `.py` files must be **ASCII-only** - no Unicode curly quotes, en/em dash characters, or any byte > 0x7F in source code or docstrings
-- Use plain ASCII substitutes: `-` for en-dash, ` - ` for em-dash, `"` / `'` for typographic quotes
-- **Exception**: Streamlit UI pages only (`streamlit_ui/pages/`) may use Unicode for display text
-- All other Python under `streamlit_ui/` (e.g. `api_client.py`, `utils.py`, `css_config.py`, `streamlit_app.py`) must stay **ASCII-only**, same as `src/`
-- Verify before committing: `python -c "open('file.py','r',encoding='ascii').read()"`
+- All `.py` files must be **ASCII-only** - no Unicode curly quotes, en/em dash
+  characters, or any byte > 0x7F in source code or docstrings.
+- Use plain ASCII substitutes: `-` for en/em dashes, `->` for arrows,
+  `"` / `'` for typographic quotes. No emoji in `.py`.
+- **Exception**: page modules under `streamlit_ui/pages/` (if reintroduced) may
+  use Unicode for display text. `streamlit_ui/streamlit_app.py` and everything
+  else under `streamlit_ui/` must stay ASCII-only, same as `src/`.
+- Verify: `python -c "open('file.py','r',encoding='ascii').read()"`.
 
 ---
 
 ## Before Marking Any Code Change Done
 
-Always run these three checks - all must pass:
+All must pass (run via uv):
 
 ```bash
-black --check .
-isort --check-only .
-mypy src/ --ignore-missing-imports
+uv run ruff format --check .
+uv run ruff check .
+uv run mypy src/ --ignore-missing-imports
 ```
 
-Auto-fix formatting:
+Auto-fix formatting/lint:
 ```bash
-black . && isort .
+uv run ruff format . && uv run ruff check --fix .
 ```
+
+Note: CI (`.github/workflows/*.disabled`) is currently disabled and still
+targets the old pip/black/isort setup - see setup TODOs in `docs/PROJECT_SPEC.md`.
 
 ---
 
 ## Testing Rules
 
-- Unit tests live in `tests/unit/`, integration tests in `tests/integration/`
-- **No DB or network in unit tests** - mock everything with `unittest.mock`
-- Use `patch.object(instance, "_method", ...)` to mock private DB calls (e.g. `_load_closed_trades`)
-- Patch SMTP at `smtplib.SMTP`, not at the import site
-- `asyncio_mode = auto` is set in `pytest.ini` - do NOT add `@pytest.mark.asyncio` to individual methods, only to classes if needed
-- Markers in use: `@pytest.mark.unit`, `@pytest.mark.trading`, `@pytest.mark.integration`, `@pytest.mark.database`
-- Reset `src.services.notification.email_notifier._notifier = None` before and after tests that call `get_notifier()`
+- Unit tests in `tests/unit/`, integration in `tests/integration/`.
+- **No DB or network in unit tests** - mock everything with `unittest.mock`.
+- `asyncio_mode = auto` in `pytest.ini` - do NOT add `@pytest.mark.asyncio` to
+  individual methods, only to classes if needed.
+- **BacktestSignalGenerator** is stateless (no DB) - use it in tests, not
+  `SignalGenerator`.
 
-Run new unit tests (no DB needed):
-```bash
-pytest -m "unit and trading" -v
-```
-
-Run full suite (requires DB ending in `_test`):
-```bash
-python scripts/run_tests.py all
-```
+Run unit tests (no DB): `uv run pytest tests/unit -v`
 
 ---
 
-## Database Safety
+## Databases
 
-- **Never run tests against a DB unless its name ends with `_test`** - conftest.py enforces this but don't bypass it
-- The test DB is `trading_system_test` (set via `TRADING_DB_NAME` env var)
-- Never drop tables if `market_data` has > 1000 rows - production guard
+Two Postgres databases on the local server:
+
+| DB | Purpose |
+|---|---|
+| `factor_stat_arb` | Application DB: market data, models, strategy tables (8 schemas) |
+| `factor_stat_arb_prefect` | Prefect orchestration metadata (isolated from trading-system's) |
+
+Setup / maintenance scripts (all `uv run scripts/<x>.py`):
+
+| Script | Does |
+|---|---|
+| `provision_db.py` | Create both DBs + the 8 schemas (idempotent; skips migrations if already populated) |
+| `clone_schema.py` | Build the app schema via `pg_dump --schema-only` from the live `trading_system` DB (how the schema was actually built) |
+| `seed_data.py` | Seed `symbols`, `market_data`, `technical_indicators` from `trading_system` (data only) |
+| `test_migrations.py` | Replay the numbered `scripts/*.sql` migrations on a throwaway DB to verify a clean in-order replay |
+
+### Database Safety
+- Never drop `factor_stat_arb` - it holds ~8.7M seeded `market_data` rows.
+- If running DB-backed tests, use a database whose name ends in `_test`.
+- The numbered `scripts/*.sql` migrations are validated by `test_migrations.py`
+  but are NOT the source of truth for the live schema (that was `clone_schema.py`).
+
+---
+
+## Services (isolated from trading-system)
+
+- **Prefect** - server on port **4201**, metadata in `factor_stat_arb_prefect`.
+  Always run the CLI via `uv run scripts/run_prefect.py <args>` (sets a repo-local
+  `PREFECT_HOME` + port + DB URL so it never touches the machine-global Prefect
+  profile / shared DB on 4200). UI: http://localhost:4201
+- **Streamlit** - bare-bones dashboard on port **8502** (trading-system uses the
+  default 8501). Entry: `streamlit_ui/streamlit_app.py` (single tabbed app:
+  Overview wired to the DB, plus milestone placeholders). Start via `main.py up`.
+
+Config for both is derived from `.env` via `src/config/settings.py`. The Prefect
+DB URL is DERIVED from `POSTGRES_PASSWORD` (single source of truth) - do not
+re-introduce a duplicated password in `PREFECT_API_DATABASE_CONNECTION_URL`.
 
 ---
 
 ## Trading Safety
 
-- The system runs **paper trading only** (`IS_PAPER_TRADING=True` in `.env`)
-- Never write code that submits real Alpaca orders outside of `pair_executor.py`
-- `get_notifier()` returns a module-level singleton - instantiated once at import time from `get_settings()`
+- **Paper trading only** (`PAPER_TRADING=true`; `alpaca_base_url` defaults to the
+  paper endpoint). Use a SEPARATE Alpaca paper key from trading-system's.
+- Never submit real Alpaca orders. Execution reuses `BasketStrategy` /
+  `pair_executor.py` - do not add order-submission code elsewhere.
 
 ---
 
@@ -79,107 +138,59 @@ python scripts/run_tests.py all
 | What | Where |
 |---|---|
 | Settings (all env vars) | `src/config/settings.py` |
-| Pairs strategy orchestrator | `src/services/strategy_engine/pairs/strategy.py` |
-| Signal logic (stateless) | `src/services/strategy_engine/pairs/signal_generator.py` - use `BacktestSignalGenerator` in tests |
+| Entry point (checks + services) | `main.py` |
+| Price series accessor | `src/shared/market_data.py` - `get_price_series()` |
+| Basket spread + z-score (reused) | `src/services/strategy_engine/baskets/spread_calculator.py` |
+| Basket strategy / execution (reused) | `src/services/strategy_engine/baskets/strategy.py` |
+| Signal logic (stateless) | `src/services/strategy_engine/pairs/signal_generator.py` |
 | Position sizing | `src/services/strategy_engine/pairs/position_sizer.py` |
-| Email notifications | `src/services/notification/email_notifier.py` |
-| Prefect hourly flow | `src/shared/prefect/flows/strategy_engine/pairs_flow.py` |
-| P&L report UI | `streamlit_ui/pages/5_PnL_Report.py` |
-| Strategy monitor UI (Pairs + Baskets tabs) | `streamlit_ui/pages/4_Strategy_Monitor.py` |
-| Pair Lab UI (Scanner + Backtest tabs) | `streamlit_ui/pages/6_Pair_Lab.py` |
-| Ops UI (Connections + Data Quality tabs) | `streamlit_ui/pages/7_Ops.py` |
-| ORM models | `src/shared/database/models/strategy_models.py` |
-| Persisted UI prefs | `config/scanner_prefs.json`, `config/analysis_prefs.json` (gitignored) |
-| Redis debug client | `src/shared/redis/client.py` - `set_json` / `get_json` helpers, no-op if Redis is down |
-| Ops Monitor Agent | `src/services/agent/ops_monitor_agent.py` - post-cycle anomaly detection via Ollama LLM |
+| Backtest engine (reused) | `src/services/strategy_engine/backtesting/engine.py` |
+| Portfolio risk guards | `src/services/risk_management/portfolio_risk_manager.py` |
+| ORM models (baskets) | `src/shared/database/models/basket_models.py` |
+| Factor strategy (NEW, planned) | `src/services/strategy_engine/factor_stat_arb/` |
+| Dashboard | `streamlit_ui/streamlit_app.py` |
 
 ---
 
-## CI Pipeline (GitHub Actions)
-
-Runs on push/PR to `main` and `develop`. All must pass:
-
-1. `black --check .`
-2. `isort --check-only .`
-3. `flake8 . --select=E9,F63,F7,F82` (syntax errors + undefined names only)
-4. `mypy src/ --ignore-missing-imports`
-5. Unit + integration + database tests (against `trading_system_test` DB)
-
----
-
-## Architecture Notes
-
-- **Spread formula**: `log(P1) - hedge_ratio * log(P2)`
-- **Signal thresholds**: entry (default 2.0 sigma), exit (0.5 sigma), stop-loss (3.0 sigma), expire (3x half-life hours)
-- **Position sizing**: bootstrap 2% fixed for first 20 trades, then Half-Kelly; hard cap 12% per leg
-- **EmailNotifier** no-ops silently when SMTP env vars are missing - safe to run unconfigured
-- **Email subject lines** use ASCII tags in code: `[PAPER]`/`[LIVE]` prefix, `[WARN]`, `[ALERT]`, `[+PNL]`/`[-PNL]` for trade closed, plain `-` as separator (no emoji in `.py` outside `streamlit_ui/pages/`)
-- **BacktestSignalGenerator** is stateless (no DB) - always use this in tests, not `SignalGenerator`
-- **UI preferences** are persisted to JSON files in `config/` (not DB) - lightweight, gitignored, survives restarts
-- **Streamlit page numbering**: 1 Portfolio, 2 Analysis, 3 Screener, 4 Strategy Monitor (Pairs tab + Baskets tab), 5 P&L Report, 6 Pair Lab (Scanner tab + Backtest tab), 7 Ops (Connections & Preferences tab + Data Quality tab)
-- **Redis debug caching**: every `intraday-pairs-trading` cycle writes bar metadata and cycle results
-  to Redis (TTL 48 h). No-op if Redis is down. Keys:
-  - `pairs:bars:{SYMBOL}` -- count, first/last timestamp, last close for the fetched price series
-  - `pairs:cycle:{SYM1}_{SYM2}` -- status, z_score, bar_counts, entry_threshold, signal (if any)
-  - Quick check: `redis-cli get pairs:cycle:EWBC_FNB`
-- **Ops Monitor Agent**: runs after every pairs cycle as a Prefect task. Reads Redis cycle/bar
-  state, calls local Ollama (`llama3.2:3b`) with `format="json"` to detect anomalies, emails
-  alert if any found. Controlled by `AGENT_ENABLED` env var. Never raises -- errors are silent.
-  Requires Ollama running locally (`ollama serve`). Model: `OLLAMA_MODEL` env var (default `llama3.2:3b`).
-
----
-
-## Data Source Architecture (updated 2026-04-03)
+## Data Source Architecture
 
 **Alpaca is used for order execution only. All price data comes from Yahoo Finance.**
 
-### market_data `data_source` values
-| Value | Written by | Used by | Notes |
-|---|---|---|---|
-| `yahoo_adjusted` | Daily Prefect flow, backpopulate scripts | Backtesting, indicators, pair discovery | EOD/multi-day adjusted bars - do not touch |
-| `yahoo_adjusted_1h` | `refresh_pair_prices_task` in `pairs_flow.py` | `get_price_series()` in strategy | Intraday 1h bars refreshed before each cycle |
-| `yahoo` | Daily Prefect flow | General market data | Unadjusted bars |
+`market_data.data_source` values in `factor_stat_arb`:
 
-### Intraday price flow
-1. `refresh_pair_prices_task` (pairs_flow) fetches 2 days of `interval='1h'` Yahoo bars via `yfinance`
-2. Upserts into `data_ingestion.market_data` with `data_source='yahoo_adjusted_1h'`
-3. `get_price_series(symbol, limit)` in `src/shared/market_data.py` reads these for the strategy
-4. Alpaca REST (`AlpacaClient`) is called only for `place_order`, `get_positions`, `get_clock`, etc.
+| Value | Coverage | Used by |
+|---|---|---|
+| `yahoo_adjusted` | ~1,038 symbols, ~2.5yr **hourly** split/dividend-adjusted | `get_price_series()` - the primary source |
+| `yahoo` | same coverage, unadjusted | general market data |
+| `yahoo_adjusted_1h` | thin (~19 symbols, few months) | legacy; NOT used here |
 
-### DB migration required
-Run `scripts/21b_add_yahoo_adjusted_1h_source.sql` to add `yahoo_adjusted_1h` to the CHECK constraint.
+- `get_price_series(symbol, limit)` reads `data_source='yahoo_adjusted'`
+  (`_DATA_SOURCE` in `src/shared/market_data.py`). The trading-system code had
+  drifted to the thin `yahoo_adjusted_1h`; this repo reverted it to the full
+  source. Any ongoing Yahoo refresh flow must write to `yahoo_adjusted` to stay
+  coherent with reads.
 
 ---
 
-## Pair Discovery & Selection Notes
+## Reused Primitives (conventions carried from trading-system)
 
-### Rank Score Formula (updated 2026-04-01)
-`rank_score = (1 - coint_pvalue) x |correlation| x z_score_abs_mean`
+The factor strategy reuses these unchanged via `SimpleNamespace` shims (see the
+reuse table in `docs/PROJECT_SPEC.md`):
 
-Previously used a liquidity proxy; replaced with `z_score_abs_mean` (mean absolute z-score over
-the discovery window). This directly measures tradeability -- pairs with low z_score_abs_mean are
-cointegrated but their spreads barely move and never cross entry thresholds.
+- **Spread formula**: `sum(w_i * log(P_i))`, then rolling z-score (BasketSpreadCalculator).
+- **Signal thresholds**: entry 2.0 sigma, exit 0.5 sigma, stop-loss 3.0 sigma,
+  expire 3x half-life hours (defaults).
+- **Position sizing**: bootstrap 2% fixed for first 20 trades, then Half-Kelly;
+  hard cap 12% per leg (`MAX_LEG_FRACTION` in `position_sizer.py`).
+- **Risk guards**: `PortfolioRiskManager` correlation guard + drawdown circuit
+  breaker apply to factor baskets exactly as to pairs/baskets.
 
-`z_score_window` is capped at 60 bars (was uncapped, could reach 100+ for long half-life pairs,
-over-smoothing the spread and compressing z-scores further).
+---
 
-### Why pairs can be found but never trade
-- Strong cointegration (low p-value) does not guarantee the spread is volatile enough to cross 2.0 sigma
-- Long half-life + uncapped z_window = heavily smoothed spread = z-scores near zero
-- Fix: rank on z_score_abs_mean, cap z_window at 60
-- **Price data gotcha**: strategy reads from `yahoo_adjusted_1h` in the DB, not from Alpaca.
-  If INSUFFICIENT_DATA appears in logs, check `redis-cli get pairs:bars:{SYMBOL}` -- the `count`
-  field shows how many bars were fetched. Ensure `refresh_pair_prices_task` ran successfully
-  and migration `21_add_yahoo_adjusted_1h_source.sql` has been applied.
+## Dropped from the trading-system base
 
-### Active Pairs Policy
-Active pair status is managed in the DB and visible in the Pair Lab UI -- do not track it here.
-For allocation caps: `max_allocation_pct` in `PairRegistry` bounds per-pair exposure; the hard
-cap is 12% per leg (`MAX_LEG_FRACTION` in `position_sizer.py`). FNB concentration risk: do not
-run more than 2 FNB-leg pairs simultaneously without reducing allocation caps further.
-
-### Backtest Window Guidance
-- Default UI window is 180 days -- this is long enough to include regime changes that hurt Sharpe
-- If a pair fails on 180 days but the equity curve shows recovery after month 3, try 90 days
-- A pair failing harder on a shorter window means the spread divergence is recent and ongoing --
-  skip it, do not adjust thresholds to compensate
+Not present in this repo (do not reference or re-add): `src/web` (FastAPI),
+`src/services/polygon`, `src/services/strategy_engine/harmonic`, the 7-page
+trading-system Streamlit UI, and the ollama/LLM chat + market-banner UI modules.
+The harmonic `scripts/26`/`27` SQL and a couple of harmonic tests still linger and
+are inert (skipped by `test_migrations.py`); prune when convenient.
