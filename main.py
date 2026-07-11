@@ -36,7 +36,7 @@ class Check:
     critical: bool = True
 
 
-# ── Preflight checks ──────────────────────────────────────────────────────────
+# -- Preflight checks ----------------------------------------------------------
 
 def check_python() -> Check:
     ok = sys.version_info[:2] == REQUIRED_PY
@@ -165,11 +165,11 @@ def run_checks() -> bool:
         msg = "PASS" + (f" ({len(warns)} warning(s))" if warns else "")
         print(f"Preflight: {msg}")
     else:
-        print("Preflight: FAILED — fix the [FAIL] items above.")
+        print("Preflight: FAILED - fix the [FAIL] items above.")
     return critical_ok
 
 
-# ── Services ──────────────────────────────────────────────────────────────────
+# -- Services ------------------------------------------------------------------
 
 def _prefect_healthy(api_url: str) -> bool:
     try:
@@ -179,35 +179,54 @@ def _prefect_healthy(api_url: str) -> bool:
         return False
 
 
-def start_services(with_ui: bool) -> int:
+# Known services and how to start them. `up` with no names starts all of these.
+SERVICES = ("prefect", "streamlit")
+
+
+def _start_prefect(env, s) -> "subprocess.Popen | None":  # noqa: F821
+    import subprocess
+    if _prefect_healthy(s.prefect_api_url):
+        print(f"[skip] Prefect already healthy at {s.prefect_api_url}")
+        return None
+    print(f"[start] Prefect server -> {s.prefect_api_url}")
+    p = subprocess.Popen(["prefect", "server", "start"], env=env)
+    for _ in range(40):
+        if _prefect_healthy(s.prefect_api_url):
+            print("[ok] Prefect server healthy")
+            break
+        time.sleep(3)
+    else:
+        print("[warn] Prefect server did not report healthy in time")
+    return p
+
+
+def _start_streamlit(env, s) -> "subprocess.Popen | None":  # noqa: F821
+    import subprocess
+    print("[start] Streamlit dashboard -> http://localhost:8501")
+    return subprocess.Popen(
+        ["streamlit", "run", "streamlit_ui/streamlit_app.py"], env=env)
+
+
+def start_services(services: list[str]) -> int:
     import subprocess
 
     from scripts.run_prefect import build_env
     from src.config.settings import get_settings
 
+    names = services or list(SERVICES)  # empty -> all
+    unknown = [n for n in names if n not in SERVICES]
+    if unknown:
+        print(f"Unknown service(s): {', '.join(unknown)}. Known: {', '.join(SERVICES)}")
+        return 2
+
     s = get_settings()
     env = build_env()
+    starters = {"prefect": _start_prefect, "streamlit": _start_streamlit}
     procs: list[tuple[str, subprocess.Popen]] = []
-
-    if _prefect_healthy(s.prefect_api_url):
-        print(f"[skip] Prefect already healthy at {s.prefect_api_url}")
-    else:
-        print(f"[start] Prefect server -> {s.prefect_api_url}")
-        procs.append(("prefect", subprocess.Popen(["prefect", "server", "start"], env=env)))
-        # wait for health
-        for _ in range(40):
-            if _prefect_healthy(s.prefect_api_url):
-                print("[ok] Prefect server healthy")
-                break
-            time.sleep(3)
-        else:
-            print("[warn] Prefect server did not report healthy in time")
-
-    if with_ui:
-        ui_env = dict(env)
-        print("[start] Streamlit dashboard -> http://localhost:8501")
-        procs.append(("streamlit", subprocess.Popen(
-            ["streamlit", "run", "streamlit_ui/streamlit_app.py"], env=ui_env)))
+    for name in names:
+        p = starters[name](env, s)
+        if p is not None:
+            procs.append((name, p))
 
     if not procs:
         print("All requested services already running. Nothing to start.")
@@ -230,14 +249,15 @@ def start_services(with_ui: bool) -> int:
     return 0
 
 
-# ── CLI ───────────────────────────────────────────────────────────────────────
+# -- CLI -----------------------------------------------------------------------
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="factor-stat-arb entry point")
     sub = parser.add_subparsers(dest="command")
     sub.add_parser("check", help="run preflight validation checks only")
-    up = sub.add_parser("up", help="run checks, then start services")
-    up.add_argument("--with-ui", action="store_true", help="also start Streamlit")
+    up = sub.add_parser("up", help="run checks, then start services (all by default)")
+    up.add_argument("services", nargs="*", metavar="SERVICE",
+                    help=f"which services to start (default: all - {', '.join(SERVICES)})")
     up.add_argument("--skip-checks", action="store_true", help="skip preflight checks")
     args = parser.parse_args()
 
@@ -253,7 +273,7 @@ def main() -> int:
                       "Use --skip-checks to override.")
                 return 1
             print()
-        return start_services(with_ui=getattr(args, "with_ui", False))
+        return start_services(args.services)
 
     parser.print_help()
     return 2

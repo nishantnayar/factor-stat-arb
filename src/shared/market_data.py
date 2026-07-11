@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 # Full-universe hourly, split/dividend-adjusted source: 1,038 symbols, ~2.5yr
 # of history. The trading-system code had been switched to a newer
 # 'yahoo_adjusted_1h' source that was only backfilled for ~19 symbols over a few
-# months — too thin for PCA factor discovery. Reverted to the source the module
+# months - too thin for PCA factor discovery. Reverted to the source the module
 # docstring already describes. NOTE: whichever source the ongoing Yahoo refresh
 # flow writes to (README step 4) must match this. See README setup TODOs.
 _DATA_SOURCE = "yahoo_adjusted"

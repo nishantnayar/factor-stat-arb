@@ -143,7 +143,7 @@ def _already_populated() -> bool:
 
 def main() -> int:
     if settings.postgres_password in ("", "your_password_here"):
-        print("ERROR: POSTGRES_PASSWORD not set in .env — fill it in first.")
+        print("ERROR: POSTGRES_PASSWORD not set in .env - fill it in first.")
         return 1
     if "--verify" in sys.argv:
         verify()
@@ -152,7 +152,7 @@ def main() -> int:
     create_schemas()
     force = "--force" in sys.argv
     if _already_populated() and not force:
-        print(f"[skip] {MAIN_DB} already has tables — migrations not replayed "
+        print(f"[skip] {MAIN_DB} already has tables - migrations not replayed "
               f"(they aren't idempotent). Use scripts/test_migrations.py to test a "
               f"clean replay on a throwaway DB, or pass --force to replay anyway.")
     else:

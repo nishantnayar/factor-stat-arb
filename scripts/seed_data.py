@@ -2,7 +2,7 @@
 
 Copies DATA ONLY for the four tables the factor strategy needs (README step 3):
 symbols, market_data, technical_indicators, technical_indicators_latest. It does
-NOT copy pairs/baskets trade history — this repo starts its own.
+NOT copy pairs/baskets trade history - this repo starts its own.
 
 Schema must already exist (see clone_schema.py). Uses pg_dump -Fc --data-only and
 pg_restore --disable-triggers (superuser) so FK ordering isn't a problem.
@@ -108,7 +108,7 @@ def seed() -> None:
             str(PG_DUMP), *_conn_args(), "--data-only", "-Fc",
             *table_flags, "-d", SOURCE_DB, "-f", str(dump),
         ]
-        print(f"[..]   pg_dump --data-only ({len(TABLES)} tables) from {SOURCE_DB} — "
+        print(f"[..]   pg_dump --data-only ({len(TABLES)} tables) from {SOURCE_DB} - "
               f"this may take a minute for market_data")
         subprocess.run(dump_cmd, env=_pg_env(), check=True)
         print(f"[ok]   dump written ({dump.stat().st_size/1e6:.1f} MB compressed)")
@@ -127,7 +127,7 @@ def seed() -> None:
 
 def main() -> int:
     if settings.postgres_password in ("", "your_password_here"):
-        print("ERROR: POSTGRES_PASSWORD not set in .env — fill it in first.")
+        print("ERROR: POSTGRES_PASSWORD not set in .env - fill it in first.")
         return 1
     if not PG_DUMP.exists():
         print(f"ERROR: pg_dump not found at {PG_DUMP}. Set PG_BIN env var.")

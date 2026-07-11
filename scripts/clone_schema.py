@@ -125,7 +125,7 @@ def verify() -> None:
 
 def main() -> int:
     if settings.postgres_password in ("", "your_password_here"):
-        print("ERROR: POSTGRES_PASSWORD not set in .env — fill it in first.")
+        print("ERROR: POSTGRES_PASSWORD not set in .env - fill it in first.")
         return 1
     if not PG_DUMP.exists():
         print(f"ERROR: pg_dump not found at {PG_DUMP}. Set PG_BIN env var.")

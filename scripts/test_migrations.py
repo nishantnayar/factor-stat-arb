@@ -102,7 +102,7 @@ def run() -> int:
                 admin.close()
 
     if failed:
-        print(f"\nRESULT: FAILED at {failed} — fix it and re-run.")
+        print(f"\nRESULT: FAILED at {failed} - fix it and re-run.")
         return 1
     print("\nRESULT: all migrations replayed cleanly. PASS")
     return 0

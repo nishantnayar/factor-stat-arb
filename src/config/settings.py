@@ -116,7 +116,7 @@ class Settings(BaseSettings):
     prefect_db_name: str = Field(
         default="factor_stat_arb_prefect", alias="PREFECT_DB_NAME"
     )
-    # Optional explicit override. Normally left blank/placeholder — the connection
+    # Optional explicit override. Normally left blank/placeholder - the connection
     # URL is derived from the postgres_* credentials so the password lives in ONE
     # place (POSTGRES_PASSWORD) instead of being duplicated here.
     prefect_db_url_override: str = Field(

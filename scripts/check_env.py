@@ -43,7 +43,7 @@ def check_venv() -> bool:
     status = "OK" if in_expected_venv else "FAIL"
     print(f"[{status}] Interpreter: {sys.executable}")
     if not in_expected_venv:
-        print(f"       Expected to run inside {expected_venv} — use `uv run` or activate .venv")
+        print(f"       Expected to run inside {expected_venv} - use `uv run` or activate .venv")
     return in_expected_venv
 
 
@@ -67,7 +67,7 @@ def main() -> int:
     if all(results):
         print("Environment OK.")
         return 0
-    print("Environment check FAILED — see above.")
+    print("Environment check FAILED - see above.")
     return 1
 
 
