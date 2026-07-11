@@ -225,17 +225,13 @@ def _start_prefect(env, s) -> "subprocess.Popen | None":  # noqa: F821
         print(f"[skip] Prefect already healthy at {api}")
         return None
     print(f"[start] Prefect server -> {api}")
-    # `prefect server start` prompts (in a TTY) when PREFECT_API_URL is set - that
-    # var is for clients. It comes from BOTH the env and Prefect's auto-load of
-    # .env, so we (1) pop it from the env and (2) run the server from a dir with
-    # no .env (the repo-local .prefect home). The server still binds via
-    # PREFECT_SERVER_API_HOST/PORT and reads the DB URL from the env.
-    server_env = dict(env)
-    server_env.pop("PREFECT_API_URL", None)
-    server_cwd = PROJECT_ROOT / ".prefect"
-    server_cwd.mkdir(exist_ok=True)
-    p = subprocess.Popen(["prefect", "server", "start"], env=server_env,
-                         cwd=str(server_cwd), stdin=subprocess.DEVNULL)
+    # Write a repo-local Prefect profile with PREFECT_API_URL set, so
+    # `prefect server start`'s prestart_check doesn't prompt (it prompts when the
+    # active profile lacks PREFECT_API_URL). stdin=DEVNULL is a further guard.
+    from scripts.run_prefect import ensure_profile
+    ensure_profile()
+    p = subprocess.Popen(["prefect", "server", "start"], env=env,
+                         stdin=subprocess.DEVNULL)
     for _ in range(40):
         if _prefect_healthy(api):
             print("[ok] Prefect server healthy")
@@ -261,22 +257,16 @@ def _service_urls(s) -> dict:
 
 
 def _start_worker(env, s) -> "subprocess.Popen | None":  # noqa: F821
-    import asyncio
     import subprocess
 
     pool = s.prefect_work_pool_data_ingestion
-    # Ensure the work pool + market-data deployment exist before the worker starts
-    # (idempotent) so `up` is fully self-contained - no separate deploy step.
-    print(f"[..]    ensuring work pool '{pool}' + deployment")
-    try:
-        from scripts.deploy_flows import ensure_deployment
-        asyncio.run(ensure_deployment())
-    except Exception as e:  # noqa: BLE001
-        print(f"[warn] could not ensure deployment ({type(e).__name__}: {e}); "
-              f"worker will still start")
+    # `--type process` auto-creates the pool if missing (non-interactive). The
+    # deployment itself is registered once via `uv run scripts/deploy_flows.py`
+    # (a one-time activity), not here - `up` only runs services.
     print(f"[start] Prefect worker -> pool '{pool}'")
     return subprocess.Popen(
-        ["prefect", "worker", "start", "--pool", pool], env=env)
+        ["prefect", "worker", "start", "--pool", pool, "--type", "process"],
+        env=env, stdin=subprocess.DEVNULL)
 
 
 def _start_streamlit(env, s) -> "subprocess.Popen | None":  # noqa: F821

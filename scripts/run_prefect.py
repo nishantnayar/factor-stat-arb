@@ -62,21 +62,33 @@ def build_env() -> dict:
     return env
 
 
+def ensure_profile() -> None:
+    """Write a repo-local Prefect profile with PREFECT_API_URL set.
+
+    `prefect server start` calls prestart_check(), which prompts interactively
+    when the ACTIVE PROFILE (profiles.toml - not env vars or .env) has no
+    PREFECT_API_URL. The default 'ephemeral' profile has none, so we write a
+    repo-local profile (under this repo's PREFECT_HOME) that sets it, which makes
+    prestart_check skip the prompt entirely.
+    """
+    home = REPO_ROOT / ".prefect"
+    home.mkdir(exist_ok=True)
+    api_url = normalize_api_url(get_settings().prefect_api_url)
+    (home / "profiles.toml").write_text(
+        'active = "factor-stat-arb"\n\n'
+        '[profiles.factor-stat-arb]\n'
+        f'PREFECT_API_URL = "{api_url}"\n',
+        encoding="utf-8",
+    )
+
+
 def main(argv: list[str]) -> int:
     if not argv:
         print("usage: uv run scripts/run_prefect.py <prefect args...>")
         return 2
     env = build_env()
-    (REPO_ROOT / ".prefect").mkdir(exist_ok=True)
-    # `prefect server start` prompts (in a TTY) when PREFECT_API_URL is set - that
-    # var is for clients and comes from BOTH env and Prefect's .env auto-load. For
-    # the server, drop it from env AND run from a dir with no .env (.prefect home)
-    # so it can't be reloaded. Server binds via PREFECT_SERVER_API_HOST/PORT.
-    cwd = None
-    if argv[:2] == ["server", "start"]:
-        env.pop("PREFECT_API_URL", None)
-        cwd = str(REPO_ROOT / ".prefect")
-    return subprocess.run(["prefect", *argv], env=env, cwd=cwd).returncode
+    ensure_profile()
+    return subprocess.run(["prefect", *argv], env=env).returncode
 
 
 if __name__ == "__main__":
