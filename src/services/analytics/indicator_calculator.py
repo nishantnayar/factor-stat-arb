@@ -7,29 +7,19 @@ that all indicators (SMA, EMA, RSI, MACD, Bollinger, etc.) are computed on
 split/dividend-adjusted OHLC for consistency with the target series.
 """
 
-import sys
 from datetime import date, datetime, timedelta, timezone
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
 from loguru import logger
-from sqlalchemy import and_, desc, select
+from sqlalchemy import and_, select
 
 from src.shared.database.base import db_transaction
 from src.shared.database.models.market_data import (  # noqa: F401 (used in type hints)
     MarketData,
 )
-
-# Import calculation functions from streamlit_ui
-# Note: In production, these should be moved to a shared location
-
-# Add streamlit_ui to path to import calculation functions
-streamlit_path = Path(__file__).parent.parent.parent.parent / "streamlit_ui"
-sys.path.insert(0, str(streamlit_path))
-
-from utils.technical_indicators import (
+from src.services.analytics.technical_indicators import (
     calculate_bollinger_bands,
     calculate_ema,
     calculate_macd,

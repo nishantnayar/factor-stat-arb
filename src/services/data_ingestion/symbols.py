@@ -8,8 +8,6 @@ from typing import List, Optional
 from loguru import logger
 from sqlalchemy import and_, func, select
 
-from src.services.polygon.client import PolygonClient
-from src.services.polygon.exceptions import PolygonDataError
 from src.shared.database.base import db_transaction
 from src.shared.database.models.symbols import DelistedSymbol, Symbol, SymbolDataStatus
 
@@ -18,7 +16,7 @@ class SymbolService:
     """Service for managing symbols and delisting detection"""
 
     def __init__(self) -> None:
-        self._polygon_client: Optional[PolygonClient] = None  # Lazy initialization - only create when needed
+        self._polygon_client = None  # Lazy; polygon is dropped in this repo (Yahoo-only)
 
     async def get_active_symbols(self) -> List[Symbol]:
         """Get all active symbols, sorted alphabetically by symbol."""
@@ -134,16 +132,19 @@ class SymbolService:
             return True
 
     @property
-    def polygon_client(self) -> PolygonClient:
-        """Lazy-load Polygon client only when needed"""
+    def polygon_client(self):  # type: ignore[no-untyped-def]
+        """Lazy-load Polygon client. Polygon was dropped from this repo (Yahoo-only);
+        this only works if src/services/polygon is restored."""
         if self._polygon_client is None:
+            from src.services.polygon.client import PolygonClient
+
             self._polygon_client = PolygonClient()
-        # Type narrowing: after the check above, _polygon_client cannot be None
-        assert self._polygon_client is not None
         return self._polygon_client
 
     async def check_symbol_health(self, symbol: str) -> bool:
         """Check if a symbol is still valid by attempting to fetch data"""
+        from src.services.polygon.exceptions import PolygonDataError
+
         try:
             # Try to get ticker details from Polygon
             await self.polygon_client.get_ticker_details(symbol)
