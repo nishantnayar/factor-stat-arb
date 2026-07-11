@@ -29,7 +29,7 @@ extended. Paper trading only via Alpaca. PostgreSQL + Prefect + Streamlit.
 
 ```bash
 uv run main.py check          # run all preflight validation checks
-uv run main.py up             # checks, then start ALL services (Prefect + Streamlit)
+uv run main.py up             # checks, then start ALL services (Prefect + Streamlit + worker)
 uv run main.py up prefect     # start only the named service(s)
 uv run main.py up --skip-checks
 ```
@@ -110,17 +110,31 @@ Setup / maintenance scripts (all `uv run scripts/<x>.py`):
 
 ## Services (isolated from trading-system)
 
+`main.py up` starts all three; narrow with names (`up prefect`, `up worker`, ...):
+
 - **Prefect** - server on port **4201**, metadata in `factor_stat_arb_prefect`.
-  Always run the CLI via `uv run scripts/run_prefect.py <args>` (sets a repo-local
+  For raw CLI use `uv run scripts/run_prefect.py <args>` (sets a repo-local
   `PREFECT_HOME` + port + DB URL so it never touches the machine-global Prefect
   profile / shared DB on 4200). UI: http://localhost:4201
 - **Streamlit** - bare-bones dashboard on port **8502** (trading-system uses the
   default 8501). Entry: `streamlit_ui/streamlit_app.py` (single tabbed app:
-  Overview wired to the DB, plus milestone placeholders). Start via `main.py up`.
+  Overview wired to the DB, plus milestone placeholders).
+- **worker** - Prefect process worker on the **`fsa-data-ingestion`** work pool
+  (distinct name so it never collides with trading-system's). `up worker` first
+  runs `scripts/deploy_flows.py:ensure_deployment()` (idempotently creates the
+  pool + the `Daily Market Data Update` deployment, cron `15 22 * * 1-5`), then
+  starts the worker. So `up` is self-contained - no separate deploy step.
 
-Config for both is derived from `.env` via `src/config/settings.py`. The Prefect
-DB URL is DERIVED from `POSTGRES_PASSWORD` (single source of truth) - do not
-re-introduce a duplicated password in `PREFECT_API_DATABASE_CONNECTION_URL`.
+### Data-ingestion flow
+- `src/shared/prefect/flows/data_ingestion/yahoo_flows.py:yahoo_market_data_flow`
+  fetches hourly Yahoo bars and writes both `yahoo` and **`yahoo_adjusted`**
+  (the source `get_price_series` reads - keep them coherent). It also chains the
+  technical-indicator calc.
+- Scheduled runs only fire when a worker is running (`up` or `up worker`).
+
+Config for all services is derived from `.env` via `src/config/settings.py`. The
+Prefect DB URL is DERIVED from `POSTGRES_PASSWORD` (single source of truth) - do
+not re-introduce a duplicated password in `PREFECT_API_DATABASE_CONNECTION_URL`.
 
 ---
 
