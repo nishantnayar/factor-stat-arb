@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     alpaca_data_url: str = Field(
         default="https://data.alpaca.markets", alias="ALPACA_DATA_URL"
     )
+    # Friendly label for the paper account (the Alpaca dashboard nickname is not
+    # exposed by the Trading API, so set it here for display purposes only).
+    alpaca_account_label: str = Field(default="", alias="ALPACA_ACCOUNT_LABEL")
 
     # Polygon.io API Configuration
     polygon_api_key: str = Field(default="", alias="POLYGON_API_KEY")

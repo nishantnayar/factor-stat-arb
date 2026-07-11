@@ -164,8 +164,9 @@ def check_alpaca() -> Check:
         a = asyncio.run(_acct())
         cash = float(a.get("cash", 0) or 0)
         status = str(a.get("status", "")).replace("AccountStatus.", "")
+        label = f"{s.alpaca_account_label} - " if s.alpaca_account_label else ""
         return Check("alpaca (paper)", True,
-                     f"connected acct {a['account_number']} {status} cash=${cash:,.0f}")
+                     f"{label}acct {a['account_number']} {status} cash=${cash:,.0f}")
     except Exception as e:  # noqa: BLE001
         return Check("alpaca (paper)", False,
                      f"auth failed: {type(e).__name__}: {e}", critical=False)
