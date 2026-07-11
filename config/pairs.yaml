@@ -1,0 +1,169 @@
+# Pre-identified Correlated Pairs for Trading
+# These pairs have been statistically validated for cointegration and correlation
+
+pairs:
+  # Technology Sector Pairs
+  - name: "AAPL_MSFT"
+    symbol1: "AAPL"
+    symbol2: "MSFT"
+    sector: "Technology"
+    correlation: 0.85
+    cointegration_pvalue: 0.001
+    half_life: 12.5  # days
+    description: "Apple vs Microsoft - Large cap tech leaders"
+    enabled: true
+    parameters:
+      entry_threshold: 2.0
+      exit_threshold: 0.5
+      stop_loss: 3.0
+      position_size: 0.05
+
+  - name: "GOOGL_META"
+    symbol1: "GOOGL"
+    symbol2: "META"
+    sector: "Technology"
+    correlation: 0.78
+    cointegration_pvalue: 0.003
+    half_life: 8.2
+    description: "Google vs Meta - Digital advertising leaders"
+    enabled: true
+    parameters:
+      entry_threshold: 2.2
+      exit_threshold: 0.6
+      stop_loss: 3.5
+      position_size: 0.04
+
+  - name: "NVDA_AMD"
+    symbol1: "NVDA"
+    symbol2: "AMD"
+    sector: "Technology"
+    correlation: 0.82
+    cointegration_pvalue: 0.002
+    half_life: 6.8
+    description: "NVIDIA vs AMD - Semiconductor leaders"
+    enabled: true
+    parameters:
+      entry_threshold: 1.8
+      exit_threshold: 0.4
+      stop_loss: 2.8
+      position_size: 0.06
+
+  # Financial Sector Pairs
+  - name: "JPM_BAC"
+    symbol1: "JPM"
+    symbol2: "BAC"
+    sector: "Financial Services"
+    correlation: 0.88
+    cointegration_pvalue: 0.001
+    half_life: 15.3
+    description: "JPMorgan vs Bank of America - Major banks"
+    enabled: true
+    parameters:
+      entry_threshold: 2.1
+      exit_threshold: 0.5
+      stop_loss: 3.2
+      position_size: 0.05
+
+  - name: "GS_MS"
+    symbol1: "GS"
+    symbol2: "MS"
+    sector: "Financial Services"
+    correlation: 0.79
+    cointegration_pvalue: 0.004
+    half_life: 11.7
+    description: "Goldman Sachs vs Morgan Stanley - Investment banks"
+    enabled: true
+    parameters:
+      entry_threshold: 2.3
+      exit_threshold: 0.7
+      stop_loss: 3.8
+      position_size: 0.04
+
+  # Healthcare Sector Pairs
+  - name: "JNJ_PFE"
+    symbol1: "JNJ"
+    symbol2: "PFE"
+    sector: "Healthcare"
+    correlation: 0.76
+    cointegration_pvalue: 0.005
+    half_life: 18.2
+    description: "Johnson & Johnson vs Pfizer - Pharma giants"
+    enabled: true
+    parameters:
+      entry_threshold: 2.4
+      exit_threshold: 0.8
+      stop_loss: 4.0
+      position_size: 0.03
+
+  - name: "UNH_ANTM"
+    symbol1: "UNH"
+    symbol2: "ANTM"
+    sector: "Healthcare"
+    correlation: 0.81
+    cointegration_pvalue: 0.002
+    half_life: 14.6
+    description: "UnitedHealth vs Anthem - Health insurance leaders"
+    enabled: true
+    parameters:
+      entry_threshold: 2.0
+      exit_threshold: 0.5
+      stop_loss: 3.2
+      position_size: 0.05
+
+  # Consumer Discretionary Pairs
+  - name: "AMZN_WMT"
+    symbol1: "AMZN"
+    symbol2: "WMT"
+    sector: "Consumer Discretionary"
+    correlation: 0.72
+    cointegration_pvalue: 0.008
+    half_life: 22.1
+    description: "Amazon vs Walmart - Retail giants"
+    enabled: true
+    parameters:
+      entry_threshold: 2.5
+      exit_threshold: 0.9
+      stop_loss: 4.2
+      position_size: 0.03
+
+  - name: "TSLA_F"
+    symbol1: "TSLA"
+    symbol2: "F"
+    sector: "Consumer Discretionary"
+    correlation: 0.68
+    cointegration_pvalue: 0.012
+    half_life: 16.8
+    description: "Tesla vs Ford - Electric vs traditional auto"
+    enabled: false  # Disabled due to higher volatility
+    parameters:
+      entry_threshold: 2.8
+      exit_threshold: 1.0
+      stop_loss: 4.5
+      position_size: 0.02
+
+  # Energy Sector Pairs
+  - name: "XOM_CVX"
+    symbol1: "XOM"
+    symbol2: "CVX"
+    sector: "Energy"
+    correlation: 0.91
+    cointegration_pvalue: 0.001
+    half_life: 9.4
+    description: "Exxon vs Chevron - Oil majors"
+    enabled: true
+    parameters:
+      entry_threshold: 1.9
+      exit_threshold: 0.4
+      stop_loss: 2.9
+      position_size: 0.06
+
+# Global Pairs Trading Settings
+global_settings:
+  max_active_pairs: 6
+  min_correlation: 0.7
+  max_correlation: 0.95
+  min_cointegration_pvalue: 0.01
+  max_half_life: 30  # days
+  rebalance_frequency: "daily"
+  data_lookback_days: 252
+  update_frequency: "hourly"

@@ -18,8 +18,12 @@ most of the infrastructure below (`src/shared`, `src/services/alpaca`,
    `factor-stat-arb` remote. Drop `src/services/strategy_engine/harmonic`,
    `src/web`, and `src/services/polygon` (Yahoo-only here) during the trim.
 2. Provision a new, separate Postgres database (`factor_stat_arb`, not the
-   original `trading_system` database) and run the existing numbered
-   `scripts/*.sql` migrations against it to recreate the schema.
+   original `trading_system` database) to recreate the schema. **Note:** the
+   numbered `scripts/*.sql` migrations don't replay cleanly (see TODO 7), so the
+   schema was instead cloned from the live `trading_system` DB via
+   `scripts/clone_schema.py` (`pg_dump --schema-only` → `pg_restore`). A separate
+   `factor_stat_arb_prefect` DB is also provisioned for Prefect. `scripts/provision_db.py`
+   creates the databases + schemas.
 3. Seed it with historical data from the original database's
    `data_ingestion.symbols`, `data_ingestion.market_data`,
    `analytics.technical_indicators`, and `analytics.technical_indicators_latest`
@@ -27,10 +31,29 @@ most of the infrastructure below (`src/shared`, `src/services/alpaca`,
    pairs/baskets trade history — this repo starts its own).
 4. Bring over `src/shared/prefect/flows/data_ingestion/yahoo_flows.py` so this
    repo keeps refreshing `market_data` on its own schedule rather than relying on
-   manual re-syncs from `trading-system` going forward.
+   manual re-syncs from `trading-system` going forward. **Source coherence:**
+   `get_price_series()` reads `data_source='yahoo_adjusted'` (full universe, ~2.5yr
+   hourly; the trading-system code had drifted to a thin, half-backfilled
+   `yahoo_adjusted_1h` — reverted in `src/shared/market_data.py`). The refresh flow
+   must write to the **same** `yahoo_adjusted` source, or `get_price_series` won't
+   see fresh bars.
 5. Point `.env` at the new database, and use a **separate Alpaca paper API key**
    from `trading-system`'s — running two strategy engines against the same paper
    account makes P&L attribution ambiguous.
+6. **TODO — re-enable CI.** `.github/workflows/ci.yml` and `security.yml` were
+   disabled during the trim (renamed `*.disabled`); they still target the old
+   pip/`requirements.txt`/`flake8`/`trading_system_test` setup. Rewrite them for
+   `uv sync`, `ruff`, and the `factor_stat_arb` DB, then rename back to `*.yml`.
+7. **Migrations — replay is fixed and testable.** `03_create_indexes.sql` used to
+   index `logging.system_logs(log_id)`, a column `02` never creates (verified
+   absent in the live schema); that line was removed. `scripts/test_migrations.py`
+   replays `02`→`25` in order on a throwaway DB and now reports PASS — run it after
+   any `.sql` change. The harmonic migrations `26`/`27` remain skipped (dropped
+   module). The live schema in `factor_stat_arb` was built via
+   `scripts/clone_schema.py` (`pg_dump`); the numbered scripts are now a validated
+   alternative path. Remaining TODO: reconcile the two so there's one documented
+   source of truth (either drop `clone_schema.py` in favour of the migrations, or
+   vice versa).
 
 ## Why this, and not another pair/basket search
 

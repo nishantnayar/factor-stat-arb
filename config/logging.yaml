@@ -1,0 +1,65 @@
+# Logging Configuration
+logging:
+  # Log Levels
+  level: "INFO"
+  root_level: "INFO"
+  
+  # Log Rotation
+  rotation:
+    size: "10 MB"
+    time: "daily"
+    retention: "30 days"
+    compression: false
+    
+  # Log Format
+  format: "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} | {message}"
+  
+  # Log Files
+  files:
+    main: "logs/trading.log"
+    errors: "logs/errors.log"
+    system: "logs/system.log"
+    trades: "logs/trades.log"
+    performance: "logs/performance.log"
+    
+  # Service-specific Logging
+  services:
+    data_ingestion:
+      level: "INFO"
+      file: "logs/data_ingestion.log"
+    strategy_engine:
+      level: "DEBUG"
+      file: "logs/strategy_engine.log"
+    execution:
+      level: "INFO"
+      file: "logs/execution.log"
+    risk_management:
+      level: "WARNING"
+      file: "logs/risk_management.log"
+    analytics:
+      level: "INFO"
+      file: "logs/analytics.log"
+    notification:
+      level: "INFO"
+      file: "logs/notification.log"
+      
+  # Structured Logging
+  structured: true
+  json_format: false
+  
+  # Performance Logging
+  performance:
+    enabled: true
+    log_execution_time: true
+    log_memory_usage: true
+    log_database_queries: false
+  
+  # Database Logging
+  database:
+    enabled: true
+    active_table: "system_logs"
+    archive_table: "archived_system_logs"
+    batch_size: 100  # Write when 100 logs are queued
+    batch_timeout: 3000  # Write every 30 seconds (or when batch is full)
+    async_logging: true
+    fallback_to_file: true

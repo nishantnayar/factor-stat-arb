@@ -179,3 +179,12 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+.claude
+/.idea
+/.cursor
+/.vscode
+/docs/articles
+
+# trading-system leftovers / runtime
+.benchmarks/
+.prefect-storage/

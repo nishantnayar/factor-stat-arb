@@ -1,0 +1,358 @@
+/* ============================================================
+   Trading System — Global Styles
+   Design: consistent with nishantnayar.vercel.app
+   Fonts : Playfair Display (headings) · DM Sans (body) · DM Mono (numbers)
+   ============================================================ */
+
+/* ── Google Fonts ─────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400;500&display=swap');
+
+/* ── Page background & base ───────────────────────────────── */
+.stApp {
+    background-color: #FAFAF8;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Top header bar ───────────────────────────────────────── */
+header[data-testid="stHeader"] {
+    background-color: #FAFAF8 !important;
+    border-bottom: none;
+}
+
+.main .block-container {
+    padding-top: 1.8rem;
+    padding-bottom: 2rem;
+    max-width: 1400px;
+}
+
+/* ── Sidebar ──────────────────────────────────────────────── */
+[data-testid="stSidebar"] {
+    background-color: #FAFAF8;
+    border-right: 1px solid rgba(26,26,26,0.08);
+}
+[data-testid="stSidebar"] .stMarkdown,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] p {
+    font-family: 'DM Sans', sans-serif;
+    color: #1a1a1a;
+}
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 {
+    font-family: 'DM Sans', sans-serif;
+    color: #1a1a1a;
+}
+
+/* ── Headings ─────────────────────────────────────────────── */
+.main h1 {
+    font-family: 'Playfair Display', Georgia, serif !important;
+    font-weight: 500;
+    font-size: 1.85rem;
+    color: #1a1a1a;
+    border-bottom: 1px solid rgba(26,26,26,0.1);
+    padding-bottom: 0.6rem;
+    margin-bottom: 1.4rem;
+    letter-spacing: -0.01em;
+}
+
+.main h2 {
+    font-family: 'Playfair Display', Georgia, serif !important;
+    font-weight: 500;
+    font-size: 1.25rem;
+    color: #1a1a1a;
+    margin-top: 1.8rem;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.005em;
+}
+
+/* Section labels — DM Sans uppercase */
+.main h3 {
+    font-family: 'DM Sans', sans-serif !important;
+    font-weight: 500;
+    font-size: 0.72rem;
+    color: #6b6b6b;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 1.2rem;
+    margin-bottom: 0.4rem;
+}
+
+.main p, .main label, .stMarkdown p {
+    font-family: 'DM Sans', sans-serif;
+    color: #1a1a1a;
+    font-size: 0.9rem;
+}
+
+/* ── Metrics — DM Mono for values ─────────────────────────── */
+[data-testid="stMetricValue"] {
+    font-family: 'DM Mono', monospace !important;
+    font-size: 1.5rem !important;
+    font-weight: 400 !important;
+    color: #1a1a1a !important;
+}
+[data-testid="stMetricLabel"] {
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.72rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #6b6b6b !important;
+    font-weight: 500 !important;
+}
+[data-testid="stMetricDelta"] {
+    font-family: 'DM Mono', monospace !important;
+    font-size: 0.82rem !important;
+}
+
+/* ── Cards ────────────────────────────────────────────────── */
+.card {
+    background: #ffffff;
+    border: 1px solid rgba(26,26,26,0.08);
+    border-radius: 4px;
+    padding: 1.4rem;
+    margin: 0.6rem 0;
+    transition: background 0.2s ease;
+}
+.card:hover {
+    background: #F5F4F0;
+}
+
+/* ── Flat metric tile ─────────────────────────────────────── */
+.metric-container {
+    background: #ffffff;
+    border: 1px solid rgba(26,26,26,0.08);
+    border-radius: 4px;
+    padding: 1rem;
+    margin: 0.4rem 0;
+    transition: background 0.2s ease;
+}
+.metric-container:hover {
+    background: #F5F4F0;
+}
+
+/* ── Tables / DataFrames — DM Mono ───────────────────────── */
+.dataframe {
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid rgba(26,26,26,0.08);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+}
+.dataframe thead th {
+    background: #F5F4F0 !important;
+    color: #6b6b6b !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 0.72rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    border-bottom: 1px solid rgba(26,26,26,0.1) !important;
+}
+.dataframe tbody tr:nth-child(even) {
+    background-color: #FAFAF8;
+}
+.dataframe tbody tr:hover {
+    background-color: #F5F4F0;
+    transition: background-color 0.15s ease;
+}
+.dataframe td {
+    font-family: 'DM Mono', monospace !important;
+}
+
+/* ── Buttons ──────────────────────────────────────────────── */
+.stButton > button {
+    background: #1a1a1a;
+    color: #FAFAF8;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1.2rem;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 0.85rem;
+    letter-spacing: 0.02em;
+    transition: opacity 0.15s ease;
+    box-shadow: none;
+}
+.stButton > button:hover {
+    opacity: 0.82;
+    transform: none;
+    box-shadow: none;
+}
+.stButton > button[kind="secondary"] {
+    background: transparent;
+    color: #1a1a1a;
+    border: 1px solid rgba(26,26,26,0.2);
+}
+.stButton > button[kind="secondary"]:hover {
+    background: #F5F4F0;
+    opacity: 1;
+}
+
+/* ── Inputs & Selects ─────────────────────────────────────── */
+.stSelectbox > div > div,
+.stTextInput > div > div > input,
+.stNumberInput > div > div > input {
+    border: 1px solid rgba(26,26,26,0.15) !important;
+    border-radius: 4px !important;
+    font-family: 'DM Sans', sans-serif !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    transition: border-color 0.15s ease !important;
+}
+.stSelectbox > div > div:focus-within,
+.stTextInput > div > div > input:focus,
+.stNumberInput > div > div > input:focus {
+    border-color: rgba(26,26,26,0.5) !important;
+    box-shadow: none !important;
+}
+
+/* ── Tabs ─────────────────────────────────────────────────── */
+[data-testid="stTabs"] [data-baseweb="tab-list"] {
+    border-bottom: 1px solid rgba(26,26,26,0.1);
+    gap: 0;
+}
+[data-testid="stTabs"] [data-baseweb="tab"] {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #6b6b6b;
+    padding: 0.5rem 1.2rem;
+    border-radius: 0;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s ease, border-bottom-color 0.15s ease;
+}
+[data-testid="stTabs"] [aria-selected="true"] {
+    color: #1a1a1a !important;
+    border-bottom: 2px solid #1a1a1a !important;
+    background: transparent !important;
+}
+
+/* ── Dividers ─────────────────────────────────────────────── */
+hr {
+    border: none;
+    border-top: 1px solid rgba(26,26,26,0.08);
+    margin: 1.2rem 0;
+}
+
+/* ── Alert boxes ──────────────────────────────────────────── */
+.stSuccess > div {
+    background: rgba(42,122,75,0.07) !important;
+    border: 1px solid rgba(42,122,75,0.2) !important;
+    color: #2A7A4B !important;
+    border-radius: 4px !important;
+    font-family: 'DM Sans', sans-serif !important;
+}
+.stError > div {
+    background: rgba(192,57,43,0.07) !important;
+    border: 1px solid rgba(192,57,43,0.2) !important;
+    color: #C0392B !important;
+    border-radius: 4px !important;
+    font-family: 'DM Sans', sans-serif !important;
+}
+.stWarning > div {
+    background: rgba(217,119,6,0.07) !important;
+    border: 1px solid rgba(217,119,6,0.2) !important;
+    color: #B45309 !important;
+    border-radius: 4px !important;
+    font-family: 'DM Sans', sans-serif !important;
+}
+.stInfo > div {
+    background: rgba(26,26,26,0.04) !important;
+    border: 1px solid rgba(26,26,26,0.1) !important;
+    color: #1a1a1a !important;
+    border-radius: 4px !important;
+    font-family: 'DM Sans', sans-serif !important;
+}
+
+/* ── P&L color utilities ──────────────────────────────────── */
+.pnl-positive {
+    color: #2A7A4B !important;
+    font-family: 'DM Mono', monospace !important;
+}
+.pnl-negative {
+    color: #C0392B !important;
+    font-family: 'DM Mono', monospace !important;
+}
+.pnl-neutral {
+    color: #6b6b6b !important;
+    font-family: 'DM Mono', monospace !important;
+}
+
+/* ── Market status banner ─────────────────────────────────── */
+.market-banner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-radius: 4px;
+    padding: 0.65rem 1.1rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+}
+.market-open-banner {
+    background: rgba(42,122,75,0.07);
+    border: 1px solid rgba(42,122,75,0.2);
+    color: #2A7A4B;
+}
+.market-closed-banner {
+    background: rgba(192,57,43,0.07);
+    border: 1px solid rgba(192,57,43,0.18);
+    color: #C0392B;
+}
+.market-prepost-banner {
+    background: rgba(217,119,6,0.07);
+    border: 1px solid rgba(217,119,6,0.18);
+    color: #B45309;
+}
+.market-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    opacity: 0.85;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────── */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #F5F4F0;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(26,26,26,0.18);
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(26,26,26,0.3);
+}
+
+/* ── Chart containers ─────────────────────────────────────── */
+.plotly-chart-container {
+    background: #ffffff;
+    border: 1px solid rgba(26,26,26,0.08);
+    border-radius: 4px;
+    padding: 1rem;
+    margin: 0.8rem 0;
+}
+
+/* ── Status dots ──────────────────────────────────────────── */
+.status-online  { color: #2A7A4B; font-weight: 500; }
+.status-offline { color: #C0392B; font-weight: 500; }
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .main .block-container {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+}
+
+/* ── Loading pulse ────────────────────────────────────────── */
+@keyframes pulse {
+    0%   { opacity: 1;   }
+    50%  { opacity: 0.5; }
+    100% { opacity: 1;   }
+}
+.loading { animation: pulse 2s infinite; }
