@@ -120,17 +120,24 @@ Setup / maintenance scripts (all `uv run scripts/<x>.py`):
   default 8501). Entry: `streamlit_ui/streamlit_app.py` (single tabbed app:
   Overview wired to the DB, plus milestone placeholders).
 - **worker** - Prefect process worker on the **`fsa-data-ingestion`** work pool
-  (distinct name so it never collides with trading-system's). `up worker` first
-  runs `scripts/deploy_flows.py:ensure_deployment()` (idempotently creates the
-  pool + the `Daily Market Data Update` deployment, cron `15 22 * * 1-5`), then
-  starts the worker. So `up` is self-contained - no separate deploy step.
+  (distinct name so it never collides with trading-system's). Starts with
+  `--type process` (auto-creates the pool). `up` runs services only.
 
 ### Data-ingestion flow
 - `src/shared/prefect/flows/data_ingestion/yahoo_flows.py:yahoo_market_data_flow`
   fetches hourly Yahoo bars and writes both `yahoo` and **`yahoo_adjusted`**
   (the source `get_price_series` reads - keep them coherent). It also chains the
   technical-indicator calc.
-- Scheduled runs only fire when a worker is running (`up` or `up worker`).
+- **Registering the deployment is a one-time step**, kept separate from running
+  services: `uv run scripts/deploy_flows.py` creates the pool + the
+  `Daily Market Data Update` deployment (cron `15 22 * * 1-5`). It persists in the
+  Prefect DB. Scheduled runs then fire whenever a worker is up (`up` / `up worker`).
+
+### Prefect prompt gotcha
+`prefect server start` prompts (in a TTY) when the active profile lacks
+PREFECT_API_URL. `run_prefect.ensure_profile()` writes a repo-local
+`.prefect/profiles.toml` with it set before starting the server - do not remove
+that call.
 
 Config for all services is derived from `.env` via `src/config/settings.py`. The
 Prefect DB URL is DERIVED from `POSTGRES_PASSWORD` (single source of truth) - do
