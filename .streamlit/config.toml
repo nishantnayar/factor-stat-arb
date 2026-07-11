@@ -6,8 +6,9 @@ textColor = "#262730"
 font = "sans serif"
 
 [server]
-port = 8501
-address = "0.0.0.0"
+# Isolated port for this repo (trading-system's UI uses the default 8501).
+port = 8502
+address = "localhost"
 headless = true
 
 [browser]

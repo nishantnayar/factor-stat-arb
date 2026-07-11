@@ -200,11 +200,16 @@ def _start_prefect(env, s) -> "subprocess.Popen | None":  # noqa: F821
     return p
 
 
+STREAMLIT_PORT = "8502"  # isolated from trading-system's default 8501
+
+
 def _start_streamlit(env, s) -> "subprocess.Popen | None":  # noqa: F821
     import subprocess
-    print("[start] Streamlit dashboard -> http://localhost:8501")
+    print(f"[start] Streamlit dashboard -> http://localhost:{STREAMLIT_PORT}")
     return subprocess.Popen(
-        ["streamlit", "run", "streamlit_ui/streamlit_app.py"], env=env)
+        ["streamlit", "run", "streamlit_ui/streamlit_app.py",
+         "--server.port", STREAMLIT_PORT, "--server.address", "localhost"],
+        env=env)
 
 
 def start_services(services: list[str]) -> int:
