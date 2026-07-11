@@ -234,6 +234,16 @@ def _start_prefect(env, s) -> "subprocess.Popen | None":  # noqa: F821
 STREAMLIT_PORT = "8502"  # isolated from trading-system's default 8501
 
 
+def _service_urls(s) -> dict:
+    prefect_ui = s.prefect_api_url.rstrip("/")
+    if prefect_ui.endswith("/api"):
+        prefect_ui = prefect_ui[:-4]
+    return {
+        "prefect": prefect_ui,
+        "streamlit": f"http://localhost:{STREAMLIT_PORT}",
+    }
+
+
 def _start_streamlit(env, s) -> "subprocess.Popen | None":  # noqa: F821
     import subprocess
     print(f"[start] Streamlit dashboard -> http://localhost:{STREAMLIT_PORT}")
@@ -264,8 +274,13 @@ def start_services(services: list[str]) -> int:
         if p is not None:
             procs.append((name, p))
 
+    urls = _service_urls(s)
+    print("\nRunning services:")
+    for name in names:
+        print(f"  {name:<10} {urls[name]}")
+
     if not procs:
-        print("All requested services already running. Nothing to start.")
+        print("\nAll requested services were already running.")
         return 0
 
     print("\nServices running. Press Ctrl+C to stop.")
