@@ -123,6 +123,29 @@ discovery and explainability layers are the active build.
 
 See [`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md) for the full design and milestone plan.
 
+## Contributing
+
+The project uses [uv](https://github.com/astral-sh/uv) for everything. After `uv sync`,
+validate a change before committing:
+
+```bash
+uv run ruff format --check .
+uv run ruff check .
+uv run mypy src/ --ignore-missing-imports
+uv run pytest tests/unit -v
+```
+
+Source under `src/` and `streamlit_ui/` (except `pages/`) must be **ASCII-only**.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow and conventions.
+
+## Security
+
+- **Paper trading only.** The system targets Alpaca's paper endpoint; it never places
+  real orders.
+- **Never commit secrets.** API keys and DB passwords live in `.env` (gitignored); use
+  `.env.example` as the template.
+- To report a vulnerability, see [SECURITY.md](SECURITY.md).
+
 ## Disclaimer
 
 This is a **technical and educational project**, not investment advice. It runs against
