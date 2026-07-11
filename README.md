@@ -1,6 +1,6 @@
 <div align="center">
 
-# Factor Stat Arb
+# Factor Statistical Arbitrage
 
 **Explainable factor-residual statistical arbitrage on US equities.**
 

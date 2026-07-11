@@ -188,3 +188,6 @@ cython_debug/
 # trading-system leftovers / runtime
 .benchmarks/
 .prefect-storage/
+
+# repo-local Prefect home (isolated profile/state)
+.prefect/
