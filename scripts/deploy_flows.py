@@ -72,13 +72,20 @@ async def deploy() -> None:
           f"on cron '{CRON}' (id={dep_id})")
 
 
+async def ensure_deployment() -> None:
+    """Idempotently ensure the work pool and market-data deployment exist.
+
+    Safe to call repeatedly (e.g. from main.py before starting the worker)."""
+    await ensure_work_pool()
+    await deploy()
+
+
 def main() -> int:
     if settings.postgres_password in ("", "your_password_here"):
         print("ERROR: POSTGRES_PASSWORD not set in .env.")
         return 1
-    asyncio.run(ensure_work_pool())
-    asyncio.run(deploy())
-    print(f"\nStart a worker to run it:  uv run main.py up worker")
+    asyncio.run(ensure_deployment())
+    print("\nStart a worker to run it:  uv run main.py up worker")
     return 0
 
 

@@ -246,8 +246,19 @@ def _service_urls(s) -> dict:
 
 
 def _start_worker(env, s) -> "subprocess.Popen | None":  # noqa: F821
+    import asyncio
     import subprocess
+
     pool = s.prefect_work_pool_data_ingestion
+    # Ensure the work pool + market-data deployment exist before the worker starts
+    # (idempotent) so `up` is fully self-contained - no separate deploy step.
+    print(f"[..]    ensuring work pool '{pool}' + deployment")
+    try:
+        from scripts.deploy_flows import ensure_deployment
+        asyncio.run(ensure_deployment())
+    except Exception as e:  # noqa: BLE001
+        print(f"[warn] could not ensure deployment ({type(e).__name__}: {e}); "
+              f"worker will still start")
     print(f"[start] Prefect worker -> pool '{pool}'")
     return subprocess.Popen(
         ["prefect", "worker", "start", "--pool", pool], env=env)

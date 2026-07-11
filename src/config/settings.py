@@ -127,7 +127,7 @@ class Settings(BaseSettings):
     )
 
     prefect_work_pool_data_ingestion: str = Field(
-        default="data-ingestion-pool", alias="PREFECT_WORK_POOL_DATA_INGESTION"
+        default="fsa-data-ingestion", alias="PREFECT_WORK_POOL_DATA_INGESTION"
     )
 
     @property
