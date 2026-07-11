@@ -225,15 +225,17 @@ def _start_prefect(env, s) -> "subprocess.Popen | None":  # noqa: F821
         print(f"[skip] Prefect already healthy at {api}")
         return None
     print(f"[start] Prefect server -> {api}")
-    # Start the server WITHOUT PREFECT_API_URL in its env. That var is for
-    # clients; when it's set, `prefect server start` runs a client/server address
-    # check and, in an interactive terminal, blocks on a "profile mismatch"
-    # prompt. The server binds via PREFECT_SERVER_API_HOST/PORT (still set).
+    # `prefect server start` prompts (in a TTY) when PREFECT_API_URL is set - that
+    # var is for clients. It comes from BOTH the env and Prefect's auto-load of
+    # .env, so we (1) pop it from the env and (2) run the server from a dir with
+    # no .env (the repo-local .prefect home). The server still binds via
+    # PREFECT_SERVER_API_HOST/PORT and reads the DB URL from the env.
     server_env = dict(env)
     server_env.pop("PREFECT_API_URL", None)
-    # No stdin either, as a belt-and-suspenders against any other prompt.
+    server_cwd = PROJECT_ROOT / ".prefect"
+    server_cwd.mkdir(exist_ok=True)
     p = subprocess.Popen(["prefect", "server", "start"], env=server_env,
-                         stdin=subprocess.DEVNULL)
+                         cwd=str(server_cwd), stdin=subprocess.DEVNULL)
     for _ in range(40):
         if _prefect_healthy(api):
             print("[ok] Prefect server healthy")
