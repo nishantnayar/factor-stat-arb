@@ -4,6 +4,7 @@ Application Settings Configuration
 
 import os
 from typing import Optional
+from urllib.parse import quote_plus
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
@@ -111,14 +112,37 @@ class Settings(BaseSettings):
         default="http://localhost:4200/api", alias="PREFECT_API_URL"
     )
 
-    prefect_db_connection_url: str = Field(
-        default="postgresql+asyncpg://postgres:password@localhost:5432/prefect",
-        alias="PREFECT_API_DATABASE_CONNECTION_URL",
+    # Name of the (separate) Prefect metadata database for this repo.
+    prefect_db_name: str = Field(
+        default="factor_stat_arb_prefect", alias="PREFECT_DB_NAME"
+    )
+    # Optional explicit override. Normally left blank/placeholder — the connection
+    # URL is derived from the postgres_* credentials so the password lives in ONE
+    # place (POSTGRES_PASSWORD) instead of being duplicated here.
+    prefect_db_url_override: str = Field(
+        default="", alias="PREFECT_API_DATABASE_CONNECTION_URL"
     )
 
     prefect_work_pool_data_ingestion: str = Field(
         default="data-ingestion-pool", alias="PREFECT_WORK_POOL_DATA_INGESTION"
     )
+
+    @property
+    def prefect_db_connection_url(self) -> str:
+        """Async Postgres URL for Prefect's metadata DB.
+
+        Uses PREFECT_API_DATABASE_CONNECTION_URL only if it's a real value (not a
+        left-over placeholder); otherwise builds it from the postgres_* settings
+        and prefect_db_name so the password is never duplicated.
+        """
+        override = self.prefect_db_url_override
+        if override and "your_password_here" not in override and ":password@" not in override:
+            return override
+        pw = quote_plus(self.postgres_password)
+        return (
+            f"postgresql+asyncpg://{self.postgres_user}:{pw}"
+            f"@{self.postgres_host}:{self.postgres_port}/{self.prefect_db_name}"
+        )
 
     class Config:
         # Allow disabling .env file reading via environment variable (useful for tests)

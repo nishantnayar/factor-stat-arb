@@ -1,104 +1,263 @@
-"""
-Main entry point for the Trading System API.
-This is now a pure API server - the UI has been moved to Streamlit.
+"""factor-stat-arb entry point.
+
+A single command to (1) validate the environment/data/services this project needs
+and (2) start the long-running services (Prefect server, optional Streamlit UI).
+
+    uv run main.py check          # run all preflight checks, exit non-zero on failure
+    uv run main.py up             # checks, then start Prefect server
+    uv run main.py up --with-ui   # also start the Streamlit dashboard
+    uv run main.py up --skip-checks
+
+Services are started with this repo's isolated Prefect config (port 4201,
+factor_stat_arb_prefect) and shut down cleanly on Ctrl+C.
 """
 
+from __future__ import annotations
+
+import argparse
 import os
 import sys
+import time
+import urllib.request
+from dataclasses import dataclass
 from pathlib import Path
 
-# Add the project root to Python path
-project_root = Path(__file__).parent
-sys.path.insert(0, str(project_root))
+PROJECT_ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+REQUIRED_PY = (3, 11)
 
 
-def _check_conda_env(expected: str = "torch_gpu") -> None:
-    """Fail fast if this process is not running in the expected conda env."""
-    actual = os.environ.get("CONDA_DEFAULT_ENV")
-    if actual != expected:
-        sys.exit(
-            f"Wrong Python environment: expected conda env '{expected}', "
-            f"got '{actual or 'none (not a conda env)'}'. "
-            f"Activate it with: conda activate {expected}"
-        )
+@dataclass
+class Check:
+    name: str
+    ok: bool
+    detail: str
+    critical: bool = True
 
 
-_check_conda_env()
+# ── Preflight checks ──────────────────────────────────────────────────────────
 
-from contextlib import asynccontextmanager
-
-from fastapi import FastAPI, Request
-from loguru import logger
-from starlette.middleware.base import BaseHTTPMiddleware
-
-from src.shared.logging import setup_logging, shutdown_logging
-from src.shared.logging.correlation import correlation_context, generate_correlation_id
-from src.web.api.alpaca_routes import router as alpaca_router
-from src.web.api.company_info import router as company_info_router
-from src.web.api.company_officers import router as company_officers_router
-from src.web.api.data_quality import router as data_quality_router
-from src.web.api.financial_statements import router as financial_statements_router
-from src.web.api.institutional_holders import router as institutional_holders_router
-from src.web.api.key_statistics import router as key_statistics_router
-from src.web.api.market_data import router as market_data_router
-from src.web.api.pairs_trading import router as pairs_trading_router
-from src.web.api.routes import router
+def check_python() -> Check:
+    ok = sys.version_info[:2] == REQUIRED_PY
+    return Check("python version", ok,
+                 f"{sys.version.split()[0]} (need {REQUIRED_PY[0]}.{REQUIRED_PY[1]}.x)")
 
 
-# Correlation ID middleware for request tracking
-class CorrelationIDMiddleware(BaseHTTPMiddleware):
-    """Middleware to add correlation ID to all requests"""
-
-    async def dispatch(self, request: Request, call_next):
-        # Get correlation ID from header or generate new one
-        correlation_id = request.headers.get("X-Correlation-ID") or generate_correlation_id()
-        
-        # Set correlation ID in context for logging
-        with correlation_context(correlation_id):
-            response = await call_next(request)
-            # Add correlation ID to response header
-            response.headers["X-Correlation-ID"] = correlation_id
-            return response
+def check_venv() -> Check:
+    expected = (PROJECT_ROOT / ".venv").resolve()
+    ok = Path(sys.prefix).resolve() == expected
+    return Check("virtualenv", ok, sys.prefix if ok else f"{sys.prefix} (expected {expected})")
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Lifespan context manager for startup and shutdown events"""
-    # Startup
-    setup_logging(service_name="web")
-    logger.info("Trading System API starting up")
-    yield
-    # Shutdown
-    logger.info("Trading System API shutting down")
-    shutdown_logging()
+def check_imports() -> Check:
+    pkgs = ["numpy", "pandas", "sklearn", "statsmodels", "lightgbm", "shap",
+            "sqlalchemy", "psycopg2", "alpaca", "prefect", "streamlit"]
+    missing = []
+    for p in pkgs:
+        try:
+            __import__(p)
+        except ImportError:
+            missing.append(p)
+    return Check("core dependencies", not missing,
+                 "all import OK" if not missing else f"missing: {', '.join(missing)}")
 
 
-app = FastAPI(
-    title="Trading System API",
-    description="A production-grade algorithmic trading system API",
-    version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    lifespan=lifespan,
-)
+def check_config() -> Check:
+    from src.config.settings import get_settings
+    s = get_settings()
+    ok = s.postgres_password not in ("", "your_password_here")
+    return Check("config (.env)", ok,
+                 "POSTGRES_PASSWORD set" if ok else "POSTGRES_PASSWORD missing/placeholder")
 
-# Add correlation ID middleware
-app.add_middleware(CorrelationIDMiddleware)
 
-# Include API routes
-app.include_router(router)
-app.include_router(alpaca_router)
-app.include_router(market_data_router)
-app.include_router(company_info_router)
-app.include_router(company_officers_router)
-app.include_router(financial_statements_router)
-app.include_router(institutional_holders_router)
-app.include_router(key_statistics_router)
-app.include_router(pairs_trading_router)
-app.include_router(data_quality_router)
+def check_database() -> Check:
+    from sqlalchemy import text
+    from src.config.database import get_engine
+    schemas = ["data_ingestion", "strategy_engine", "analytics", "risk_management"]
+    try:
+        eng = get_engine("trading")
+        with eng.connect() as conn:
+            db = conn.execute(text("select current_database()")).scalar()
+            found = conn.execute(text(
+                "select count(*) from information_schema.schemata where schema_name = any(:s)"
+            ), {"s": schemas}).scalar()
+        ok = db == "factor_stat_arb" and found == len(schemas)
+        return Check("database", ok, f"connected to {db}, {found}/{len(schemas)} core schemas")
+    except Exception as e:  # noqa: BLE001
+        return Check("database", False, f"{type(e).__name__}: {e}")
+
+
+def check_seed_data() -> Check:
+    from sqlalchemy import text
+    from src.config.database import get_engine
+    try:
+        eng = get_engine("trading")
+        with eng.connect() as conn:
+            md = conn.execute(text("select count(*) from data_ingestion.market_data")).scalar()
+            sym = conn.execute(text("select count(*) from data_ingestion.symbols")).scalar()
+        ok = md > 0 and sym > 0
+        return Check("seed data", ok, f"market_data={md:,} rows, symbols={sym:,}")
+    except Exception as e:  # noqa: BLE001
+        return Check("seed data", False, f"{type(e).__name__}: {e}")
+
+
+def check_price_series() -> Check:
+    from sqlalchemy import text
+    from src.config.database import get_engine
+    from src.shared.market_data import get_price_series
+    try:
+        eng = get_engine("trading")
+        with eng.connect() as conn:
+            sym = conn.execute(text(
+                "select symbol from data_ingestion.market_data "
+                "where data_source='yahoo_adjusted' limit 1"
+            )).scalar()
+        s = get_price_series(sym, limit=10) if sym else []
+        ok = len(s) > 0
+        return Check("get_price_series", ok,
+                     f"{sym}: {len(s)} bars" if ok else f"no data for {sym}")
+    except Exception as e:  # noqa: BLE001
+        return Check("get_price_series", False, f"{type(e).__name__}: {e}")
+
+
+def check_prefect_config() -> Check:
+    from src.config.settings import get_settings
+    s = get_settings()
+    ok = ":4201" in s.prefect_api_url and s.prefect_db_connection_url.endswith(
+        "/factor_stat_arb_prefect")
+    return Check("prefect config", ok,
+                 f"{s.prefect_api_url} -> factor_stat_arb_prefect (isolated)")
+
+
+def check_alpaca() -> Check:
+    from src.config.settings import get_settings
+    s = get_settings()
+    is_paper = "paper" in s.alpaca_base_url
+    have_keys = bool(s.alpaca_api_key and s.alpaca_secret_key)
+    if not is_paper:
+        return Check("alpaca (paper)", False, f"base_url not paper: {s.alpaca_base_url}")
+    detail = "paper endpoint, keys set" if have_keys else "paper endpoint, KEYS MISSING (set to trade)"
+    return Check("alpaca (paper)", True, detail, critical=False)
+
+
+PREFLIGHT = [
+    check_python, check_venv, check_imports, check_config, check_database,
+    check_seed_data, check_price_series, check_prefect_config, check_alpaca,
+]
+
+
+def run_checks() -> bool:
+    print("factor-stat-arb preflight\n" + "-" * 60)
+    results = []
+    for fn in PREFLIGHT:
+        try:
+            r = fn()
+        except Exception as e:  # noqa: BLE001
+            r = Check(fn.__name__, False, f"{type(e).__name__}: {e}")
+        results.append(r)
+        mark = "OK  " if r.ok else ("WARN" if not r.critical else "FAIL")
+        print(f"[{mark}] {r.name:<20} {r.detail}")
+    print("-" * 60)
+    critical_ok = all(r.ok for r in results if r.critical)
+    warns = [r for r in results if not r.ok and not r.critical]
+    if critical_ok:
+        msg = "PASS" + (f" ({len(warns)} warning(s))" if warns else "")
+        print(f"Preflight: {msg}")
+    else:
+        print("Preflight: FAILED — fix the [FAIL] items above.")
+    return critical_ok
+
+
+# ── Services ──────────────────────────────────────────────────────────────────
+
+def _prefect_healthy(api_url: str) -> bool:
+    try:
+        urllib.request.urlopen(api_url.rstrip("/") + "/health", timeout=2)
+        return True
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def start_services(with_ui: bool) -> int:
+    import subprocess
+
+    from scripts.run_prefect import build_env
+    from src.config.settings import get_settings
+
+    s = get_settings()
+    env = build_env()
+    procs: list[tuple[str, subprocess.Popen]] = []
+
+    if _prefect_healthy(s.prefect_api_url):
+        print(f"[skip] Prefect already healthy at {s.prefect_api_url}")
+    else:
+        print(f"[start] Prefect server -> {s.prefect_api_url}")
+        procs.append(("prefect", subprocess.Popen(["prefect", "server", "start"], env=env)))
+        # wait for health
+        for _ in range(40):
+            if _prefect_healthy(s.prefect_api_url):
+                print("[ok] Prefect server healthy")
+                break
+            time.sleep(3)
+        else:
+            print("[warn] Prefect server did not report healthy in time")
+
+    if with_ui:
+        ui_env = dict(env)
+        print("[start] Streamlit dashboard -> http://localhost:8501")
+        procs.append(("streamlit", subprocess.Popen(
+            ["streamlit", "run", "streamlit_ui/streamlit_app.py"], env=ui_env)))
+
+    if not procs:
+        print("All requested services already running. Nothing to start.")
+        return 0
+
+    print("\nServices running. Press Ctrl+C to stop.")
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\nShutting down services...")
+        for name, p in procs:
+            p.terminate()
+        for name, p in procs:
+            try:
+                p.wait(timeout=15)
+            except subprocess.TimeoutExpired:
+                p.kill()
+            print(f"[stopped] {name}")
+    return 0
+
+
+# ── CLI ───────────────────────────────────────────────────────────────────────
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="factor-stat-arb entry point")
+    sub = parser.add_subparsers(dest="command")
+    sub.add_parser("check", help="run preflight validation checks only")
+    up = sub.add_parser("up", help="run checks, then start services")
+    up.add_argument("--with-ui", action="store_true", help="also start Streamlit")
+    up.add_argument("--skip-checks", action="store_true", help="skip preflight checks")
+    args = parser.parse_args()
+
+    command = args.command or "check"
+
+    if command == "check":
+        return 0 if run_checks() else 1
+
+    if command == "up":
+        if not args.skip_checks:
+            if not run_checks():
+                print("\nAborting service start (preflight failed). "
+                      "Use --skip-checks to override.")
+                return 1
+            print()
+        return start_services(with_ui=getattr(args, "with_ui", False))
+
+    parser.print_help()
+    return 2
 
 
 if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    sys.exit(main())
