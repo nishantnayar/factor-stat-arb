@@ -211,7 +211,7 @@ def _prefect_healthy(api_url: str) -> bool:
 
 
 # Known services and how to start them. `up` with no names starts all of these.
-SERVICES = ("prefect", "streamlit")
+SERVICES = ("prefect", "streamlit", "worker")
 
 
 def _start_prefect(env, s) -> "subprocess.Popen | None":  # noqa: F821
@@ -241,7 +241,16 @@ def _service_urls(s) -> dict:
     return {
         "prefect": prefect_ui,
         "streamlit": f"http://localhost:{STREAMLIT_PORT}",
+        "worker": f"pool '{s.prefect_work_pool_data_ingestion}'",
     }
+
+
+def _start_worker(env, s) -> "subprocess.Popen | None":  # noqa: F821
+    import subprocess
+    pool = s.prefect_work_pool_data_ingestion
+    print(f"[start] Prefect worker -> pool '{pool}'")
+    return subprocess.Popen(
+        ["prefect", "worker", "start", "--pool", pool], env=env)
 
 
 def _start_streamlit(env, s) -> "subprocess.Popen | None":  # noqa: F821
@@ -267,7 +276,8 @@ def start_services(services: list[str]) -> int:
 
     s = get_settings()
     env = build_env()
-    starters = {"prefect": _start_prefect, "streamlit": _start_streamlit}
+    starters = {"prefect": _start_prefect, "streamlit": _start_streamlit,
+                "worker": _start_worker}
     procs: list[tuple[str, subprocess.Popen]] = []
     for name in names:
         p = starters[name](env, s)
