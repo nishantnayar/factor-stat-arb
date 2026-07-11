@@ -218,13 +218,19 @@ SERVICES = ("prefect", "streamlit", "worker")
 
 def _start_prefect(env, s) -> "subprocess.Popen | None":  # noqa: F821
     import subprocess
-    if _prefect_healthy(s.prefect_api_url):
-        print(f"[skip] Prefect already healthy at {s.prefect_api_url}")
+
+    from scripts.run_prefect import normalize_api_url
+    api = normalize_api_url(s.prefect_api_url)
+    if _prefect_healthy(api):
+        print(f"[skip] Prefect already healthy at {api}")
         return None
-    print(f"[start] Prefect server -> {s.prefect_api_url}")
-    p = subprocess.Popen(["prefect", "server", "start"], env=env)
+    print(f"[start] Prefect server -> {api}")
+    # No stdin: if Prefect ever tries to prompt interactively, it gets EOF and
+    # fails fast instead of hanging `up`.
+    p = subprocess.Popen(["prefect", "server", "start"], env=env,
+                         stdin=subprocess.DEVNULL)
     for _ in range(40):
-        if _prefect_healthy(s.prefect_api_url):
+        if _prefect_healthy(api):
             print("[ok] Prefect server healthy")
             break
         time.sleep(3)

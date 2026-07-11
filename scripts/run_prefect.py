@@ -24,9 +24,22 @@ sys.path.insert(0, str(REPO_ROOT))
 from src.config.settings import get_settings  # noqa: E402
 
 
+def normalize_api_url(url: str) -> str:
+    """Ensure the Prefect API URL ends with '/api'.
+
+    Prefect's server API lives under /api; if PREFECT_API_URL lacks it (a common
+    .env mistake), `prefect server start` sees a client/server mismatch and blocks
+    on an interactive prompt. Normalizing avoids that entirely.
+    """
+    url = url.rstrip("/")
+    if not url.endswith("/api"):
+        url += "/api"
+    return url
+
+
 def build_env() -> dict:
     s = get_settings()
-    api_url = s.prefect_api_url                      # http://localhost:4201/api
+    api_url = normalize_api_url(s.prefect_api_url)   # http://localhost:4201/api
     parsed = urlparse(api_url)
     port = str(parsed.port or 4201)
     host = parsed.hostname or "127.0.0.1"
