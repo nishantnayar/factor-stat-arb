@@ -15,7 +15,6 @@ factor_stat_arb_prefect) and shut down cleanly on Ctrl+C.
 from __future__ import annotations
 
 import argparse
-import os
 import sys
 import time
 import urllib.request
