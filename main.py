@@ -1,15 +1,18 @@
 """factor-stat-arb entry point.
 
 A single command to (1) validate the environment/data/services this project needs
-and (2) start the long-running services (Prefect server, optional Streamlit UI).
+and (2) start the long-running services (Prefect server, Streamlit UI, and the
+Prefect worker that runs scheduled data-ingestion flows).
 
-    uv run main.py check          # run all preflight checks, exit non-zero on failure
-    uv run main.py up             # checks, then start Prefect server
-    uv run main.py up --with-ui   # also start the Streamlit dashboard
+    uv run main.py check              # run all preflight checks, exit non-zero on failure
+    uv run main.py up                 # checks, then start ALL services
+    uv run main.py up prefect         # start only the named service(s)
+    uv run main.py up worker          # ensure the work pool + deployment, run the worker
     uv run main.py up --skip-checks
 
-Services are started with this repo's isolated Prefect config (port 4201,
-factor_stat_arb_prefect) and shut down cleanly on Ctrl+C.
+Services use this repo's isolated Prefect config (port 4201,
+factor_stat_arb_prefect, work pool fsa-data-ingestion) and shut down cleanly on
+Ctrl+C.
 """
 
 from __future__ import annotations
