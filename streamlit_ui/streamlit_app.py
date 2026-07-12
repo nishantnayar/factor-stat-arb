@@ -17,7 +17,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 import streamlit as st  # noqa: E402
 
 st.set_page_config(
-    page_title="Factor Stat Arb",
+    page_title="Factor Statistical Arbitrage",
     layout="wide",
     initial_sidebar_state="collapsed",
 )

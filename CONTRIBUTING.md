@@ -1,4 +1,4 @@
-# Contributing to Factor Stat Arb
+# Contributing to Factor Statistical Arbitrage
 
 Thanks for your interest. This is a personal research project, but the workflow below
 keeps changes consistent and reviewable.

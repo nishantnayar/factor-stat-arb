@@ -1,4 +1,4 @@
-# CLAUDE.md - Factor Stat Arb
+# CLAUDE.md - Factor Statistical Arbitrage
 
 ## Project
 

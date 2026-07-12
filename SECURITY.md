@@ -2,7 +2,7 @@
 
 ## Scope
 
-Factor Stat Arb is a **paper-trading, educational** project. It targets Alpaca's paper
+Factor Statistical Arbitrage is a **paper-trading, educational** project. It targets Alpaca's paper
 endpoint (`PAPER_TRADING=true`) and never places real orders. It handles API keys and a
 database password, so basic secret hygiene still applies.
 
