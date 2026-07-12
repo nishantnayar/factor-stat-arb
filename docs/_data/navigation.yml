@@ -1,6 +1,6 @@
 # Sidebar navigation used by pages with sidebar: nav: "docs"
 docs:
-  - title: "Factor Stat Arb"
+  - title: "Factor Statistical Arbitrage"
     children:
       - title: "Home"
         url: /

@@ -12,7 +12,7 @@ sidebar:
 
 # Architecture
 
-Factor Stat Arb is a modular Python system for explainable factor-residual
+Factor Statistical Arbitrage is a modular Python system for explainable factor-residual
 statistical arbitrage on US equities. This page covers the system design,
 component breakdown, and milestone roadmap.
 

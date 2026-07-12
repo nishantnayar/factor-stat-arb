@@ -12,7 +12,7 @@ sidebar:
 
 # Methodology
 
-How Factor Stat Arb finds and screens tradable residuals, stage by stage.
+How Factor Statistical Arbitrage finds and screens tradable residuals, stage by stage.
 
 ## Pipeline overview
 

@@ -2,10 +2,12 @@
 
 # Factor Statistical Arbitrage
 
-**Explainable factor-residual statistical arbitrage on US equities.**
+**Every stock in the universe, screened for mean-reversion — in one pass, not a
+pairwise search.**
 
-Extract statistical factors from the whole universe, trade what mean-reverts in the
-residual, and explain every signal before it fires.
+PCA finds the common structure. A tradable ETF hedge removes it. What's left either
+mean-reverts cleanly or it doesn't — and every signal comes with a plain-English
+reason before it fires.
 
 [![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
 [![Package manager: uv](https://img.shields.io/badge/deps-uv-purple.svg)](https://github.com/astral-sh/uv)
@@ -17,23 +19,37 @@ residual, and explain every signal before it fires.
 
 ---
 
+## The problem with pairs trading
+
+Classic pairs and basket strategies search for *tuples* of tickers that happen to
+cointegrate — a combinatorial search over discrete ticker sets, filtered by a strict
+statistical test. On real data that search comes back sparse, unstable, and slow to
+re-run as correlations shift.
+
 ## The idea
 
-Classic pairs and basket strategies hunt for a *pair* or *tuple* of tickers that happen
-to cointegrate — a combinatorial search over discrete ticker sets, filtered by a strict
-statistical test. On real data that search tends to come back sparse and unstable.
-
-**Factor Stat Arb sidesteps the combinatorics.** It decomposes the entire universe's
-return covariance with PCA in a single pass, then asks one question of *every* stock:
+**Factor Stat Arb skips the combinatorics entirely.** It decomposes the whole
+universe's return covariance with PCA in a single pass, then asks one question of
+*every* stock at once:
 
 > After removing the common market/sector structure, does what's left mean-revert
 > quickly and cleanly?
 
 Each stock is regressed onto a small set of **tradable ETF proxies** (e.g. sector ETF +
-SPY), so the residual spread is directly executable — and the loadings double as a
-plain-English explanation ("this name trades like 70% XLF, 20% SPY"). A confidence model
-and SHAP layer then score and explain each candidate signal before any capital is
-committed.
+SPY), so the residual spread is directly executable — no synthetic factor portfolios.
+The regression weights double as a plain-English explanation:
+
+> "JPM trades like 1.23x XLF, roughly SPY-neutral, R² = 0.72, half-life 4.2h."
+
+A confidence model and SHAP layer then score and explain each candidate before any
+capital is committed — so every trade has a reason attached, not just a z-score.
+
+| | Pairwise cointegration search | Factor Stat Arb |
+|---|---|---|
+| **Search space** | Combinatorial over ticker pairs | One PCA pass over the whole universe |
+| **Hedge** | Ad hoc, per pair | Tradable ETF proxies, fit once per stock |
+| **Output** | A cointegrated pair, or nothing | A ranked, explained residual for every stock |
+| **Explainability** | "The test passed" | Loadings + SHAP: "why this signal, why now" |
 
 ## How it works
 

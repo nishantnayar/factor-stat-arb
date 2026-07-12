@@ -1,5 +1,5 @@
-title: "Factor Stat Arb"
-subtitle: "Explainable Factor-Residual Statistical Arbitrage"
+title: "Factor Statistical Arbitrage"
+subtitle: "Explainable Factor-Residual Stat Arb on US Equities"
 description: >-
   PCA decomposition, tradable ETF proxy mapping, OU residual mean-reversion,
   and signal explainability via LightGBM + SHAP. Paper trading only via Alpaca.
@@ -26,7 +26,7 @@ plugins:
 author:
   name: "Nishant Nayar"
   github: "nishantnayar"
-  bio: "Algorithmic trader. Building explainable factor stat arb on US equities."
+  bio: "Algorithmic trader. Building explainable Factor Statistical Arbitrage on US equities."
   links:
     - label: "GitHub"
       icon: "fab fa-fw fa-github"

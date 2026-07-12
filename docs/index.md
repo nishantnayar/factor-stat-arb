@@ -50,7 +50,7 @@ Classic pairs and basket strategies hunt for a *pair* or *tuple* of tickers that
 to cointegrate -- a combinatorial search over discrete ticker sets, filtered by a strict
 statistical test. On real data that search tends to come back sparse and unstable.
 
-**Factor Stat Arb sidesteps the combinatorics.** It decomposes the entire universe's
+**Factor Statistical Arbitrage sidesteps the combinatorics.** It decomposes the entire universe's
 return covariance with PCA in a single pass, then asks one question of *every* stock:
 
 > After removing the common market/sector structure, does what's left mean-revert

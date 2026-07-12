@@ -10,7 +10,7 @@ sidebar:
 
 ## The project
 
-**Factor Stat Arb** is an open-source research system for explainable
+**Factor Statistical Arbitrage** is an open-source research system for explainable
 factor-residual statistical arbitrage on US equities.
 
 Rather than searching combinatorially for pairs of tickers that happen to
