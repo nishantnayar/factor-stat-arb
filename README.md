@@ -115,7 +115,7 @@ discovery and explainability layers are the active build.
 - [x] PostgreSQL provisioned, schema built, ~8.7M market-data rows seeded
 - [x] Reused data / backtest / risk / execution primitives wired and import-tested
 - [x] PCA factor model + tradable-proxy mapping
-- [ ] OU residual fit + discovery script
+- [x] OU residual fit + discovery script
 - [ ] Factor backtest engine
 - [ ] Prefect discovery flow
 - [ ] Confidence model + SHAP explainability
