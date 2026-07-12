@@ -53,6 +53,36 @@ strategies:
       run_frequency: "hourly"
       market_hours_only: true
 
+  - name: "factor_stat_arb_strategy"
+    enabled: false  # not auto-activated: candidates require manual review, see below
+    description: "Factor-residual mean reversion: PCA + ETF proxy hedge + OU screening"
+    parameters:
+      lookback_days: 252         # days of hourly history used by discovery
+      min_proxy_r2: 0.30         # min proxy-regression fit quality (R^2)
+      min_half_life_hours: 48.0  # OU half-life screen (lower bound)
+      max_half_life_hours: 400.0 # OU half-life screen (upper bound)
+      entry_threshold: 2.0       # Z-score threshold for entry
+      exit_threshold: 0.5        # Z-score threshold for exit
+      stop_loss_threshold: 3.0   # Z-score stop loss
+      max_allocation_pct: 0.05   # 5% of portfolio per basket
+      top_n: 50                  # max candidates kept per discovery run
+    risk_limits:
+      max_drawdown: 0.15
+      max_daily_loss: 0.03
+      max_positions: 20
+      max_sector_exposure: 0.4
+    schedule:
+      run_frequency: "weekly"          # discovery: Sat 03:45 UTC (weekly_factor_discovery_flow)
+      market_hours_only: false
+    discovery:
+      script: "scripts/discover_factor_baskets.py"
+      flow: "src.shared.prefect.flows.strategy_engine.factor_discovery_flow:weekly_factor_discovery_flow"
+      backtest_script: "scripts/backtest_factor_baskets.py"
+      registry_table: "strategy_engine.basket_registry"
+      backtest_run_table: "strategy_engine.basket_backtest_run"
+      manual_review_required: true  # candidates upsert with is_active=false; flip manually after
+                                     # inspecting the backtest gate verdict (Sharpe/win-rate/drawdown)
+
 # Global Strategy Settings
 global_settings:
   paper_trading: true
