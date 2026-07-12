@@ -10,20 +10,30 @@ sidebar:
 
 ## The project
 
-**Factor Stat Arb** is an open-source research project exploring explainable
-factor-residual statistical arbitrage on US equities. It is built on top of a
-prior pairs/baskets trading system and extends it with a new discovery layer:
+**Factor Stat Arb** is an open-source research system for explainable
+factor-residual statistical arbitrage on US equities.
 
-- **PCA factor decomposition** extracts common return structure from 1,000+ symbols
-  in one pass, rather than searching combinatorially for cointegrated pairs.
-- **Tradable ETF proxy regression** maps each stock to liquid ETFs, making the
-  residual spread both directly executable and interpretable.
-- **Ornstein-Uhlenbeck residual fitting** screens for names with clean,
-  bounded mean-reversion over a half-life appropriate for hourly bars.
-- **LightGBM + SHAP explainability** scores and explains every signal candidate
-  before any capital is committed.
+Rather than searching combinatorially for pairs of tickers that happen to
+cointegrate, the system decomposes the entire universe's return covariance
+with PCA in a single pass and asks one question of every stock: *does what's
+left after removing the common market and sector structure mean-revert cleanly
+enough to trade?*
 
-All execution is paper-only via Alpaca. Nothing here constitutes investment advice.
+Four properties make this approach distinct:
+
+- **Universe-wide.** Every stock is evaluated in the same PCA pass -- no
+  combinatorial search, no cherry-picked pairs.
+- **Tradable hedges.** Each stock is regressed onto liquid ETFs (SPY + its
+  sector ETF), so the hedge portfolio is directly executable, not a synthetic
+  statistical construct.
+- **Interpretable.** The regression loadings read as a plain-English exposure:
+  "XOM trades like 0.85 XLE + 0.15 SPY." Every candidate signal comes with
+  this label before any capital is committed.
+- **Explainable signals.** A LightGBM confidence model and SHAP layer score
+  and explain each candidate signal against historical trade outcomes.
+
+All execution is paper-only via Alpaca. Nothing here constitutes investment
+advice.
 
 ## Tech stack
 
@@ -32,17 +42,39 @@ All execution is paper-only via Alpaca. Nothing here constitutes investment advi
 | Language | Python 3.11, managed with [uv](https://github.com/astral-sh/uv) |
 | Data / modeling | pandas, NumPy, scikit-learn, statsmodels, LightGBM, SHAP |
 | Storage | PostgreSQL (SQLAlchemy ORM), ~8.7M hourly adjusted bars |
-| Orchestration | Prefect (scheduled discovery and data refresh) |
+| Orchestration | Prefect (scheduled discovery + data refresh) |
 | Execution | Alpaca paper trading API |
 | Dashboard | Streamlit |
-| Docs | Jekyll + Minimal Mistakes (this site) |
+| Docs | Jekyll + Minimal Mistakes |
+
+## Get started
+
+```bash
+# 1. Install (uv provisions Python 3.11 itself)
+uv sync
+
+# 2. Configure
+cp .env.example .env      # set POSTGRES_PASSWORD and Alpaca paper keys
+
+# 3. Provision databases and schema
+uv run scripts/provision_db.py
+
+# 4. Seed market data
+uv run scripts/seed_data.py
+
+# 5. Start all services
+uv run main.py up
+```
+
+Detailed setup and architecture are on the
+[Architecture]({{ "/project-spec/" | relative_url }}) page.
 
 ## Repository
 
-Source code, scripts, tests, and the Streamlit dashboard live at
-[github.com/nishantnayar/factor-stat-arb](https://github.com/nishantnayar/factor-stat-arb).
+Source code, scripts, tests, and the Streamlit dashboard:
+[github.com/nishantnayar/factor-stat-arb](https://github.com/nishantnayar/factor-stat-arb)
 
-Contributions, bug reports, and questions are welcome via
+Bug reports and questions are welcome via
 [GitHub Issues](https://github.com/nishantnayar/factor-stat-arb/issues).
 
 ## Disclaimer
