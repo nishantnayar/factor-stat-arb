@@ -342,7 +342,7 @@ class TestFinancialStatementModel:
         # These should be set automatically by the database when saved
         # For unit tests, they might be None until saved to database
         # We'll test that they can be set manually
-        from datetime import datetime, timezone
+        from datetime import timezone
 
         now = datetime.now(timezone.utc)
         stmt.created_at = now

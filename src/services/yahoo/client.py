@@ -194,13 +194,21 @@ class YahooClient:
                     # Validate and clean officer data
                     name = officer_data.get("name", "").strip()
                     if not name or name.lower() == "unknown":
-                        logger.warning(f"Skipping officer {i+1} for {symbol}: invalid name")
+                        logger.warning(
+                            f"Skipping officer {i + 1} for {symbol}: invalid name"
+                        )
                         continue
 
                     # Clean and validate compensation data
-                    total_pay = self._clean_compensation_value(officer_data.get("totalPay"))
-                    exercised_value = self._clean_compensation_value(officer_data.get("exercisedValue"))
-                    unexercised_value = self._clean_compensation_value(officer_data.get("unexercisedValue"))
+                    total_pay = self._clean_compensation_value(
+                        officer_data.get("totalPay")
+                    )
+                    exercised_value = self._clean_compensation_value(
+                        officer_data.get("exercisedValue")
+                    )
+                    unexercised_value = self._clean_compensation_value(
+                        officer_data.get("unexercisedValue")
+                    )
 
                     # Validate age and year_born
                     age = self._clean_age_value(officer_data.get("age"))
@@ -220,9 +228,9 @@ class YahooClient:
                     }
                     officer = CompanyOfficer.model_validate(officer_payload)
                     officers.append(officer)
-                    
+
                 except Exception as e:
-                    logger.warning(f"Failed to parse officer {i+1} for {symbol}: {e}")
+                    logger.warning(f"Failed to parse officer {i + 1} for {symbol}: {e}")
                     continue
 
             logger.info(f"Successfully fetched {len(officers)} officers for {symbol}")
@@ -238,12 +246,14 @@ class YahooClient:
         """Clean and validate compensation values"""
         if value is None:
             return None
-        
+
         try:
             # Convert to int if it's a number
             if isinstance(value, (int, float)):
                 # Convert to cents and ensure it's reasonable
-                cents_value = int(value * 100) if isinstance(value, float) else int(value)
+                cents_value = (
+                    int(value * 100) if isinstance(value, float) else int(value)
+                )
                 if cents_value < 0:
                     return None
                 if cents_value > 10_000_000_000_000:  # 100 billion dollars in cents
@@ -258,7 +268,7 @@ class YahooClient:
         """Clean and validate age values"""
         if value is None:
             return None
-        
+
         try:
             age = int(value)
             if 18 <= age <= 120:  # Reasonable age range
@@ -271,7 +281,7 @@ class YahooClient:
         """Clean and validate year values"""
         if value is None:
             return None
-        
+
         try:
             year = int(value)
             current_year = datetime.now().year
@@ -307,7 +317,9 @@ class YahooClient:
                 "forwardPE": info.get("forwardPE"),
                 "pegRatio": info.get("pegRatio"),
                 "priceToBook": info.get("priceToBook"),
-                "priceToSalesTrailing12Months": info.get("priceToSalesTrailing12Months"),
+                "priceToSalesTrailing12Months": info.get(
+                    "priceToSalesTrailing12Months"
+                ),
                 "enterpriseToRevenue": info.get("enterpriseToRevenue"),
                 "enterpriseToEbitda": info.get("enterpriseToEbitda"),
                 "profitMargins": info.get("profitMargins"),
@@ -480,10 +492,16 @@ class YahooClient:
                         "symbol": symbol,
                         "date_reported": pd.to_datetime(row["Date Reported"]).date(),
                         "holder_name": row["Holder"],
-                        "shares": int(row["Shares"]) if pd.notna(row["Shares"]) else None,
+                        "shares": int(row["Shares"])
+                        if pd.notna(row["Shares"])
+                        else None,
                         "value": int(row["Value"]) if pd.notna(row["Value"]) else None,
-                        "pctHeld": float(row["pctHeld"]) if pd.notna(row.get("pctHeld")) else None,
-                        "pctChange": float(row["pctChange"]) if pd.notna(row.get("pctChange")) else None,
+                        "pctHeld": float(row["pctHeld"])
+                        if pd.notna(row.get("pctHeld"))
+                        else None,
+                        "pctChange": float(row["pctChange"])
+                        if pd.notna(row.get("pctChange"))
+                        else None,
                     }
                     holder = InstitutionalHolder.model_validate(holder_payload)
                     holders.append(holder)
@@ -597,7 +615,9 @@ class YahooClient:
                         k: (
                             None
                             if pd.isna(v)
-                            else float(v) if isinstance(v, (int, float)) else v
+                            else float(v)
+                            if isinstance(v, (int, float))
+                            else v
                         )
                         for k, v in data_dict.items()
                     }
@@ -640,14 +660,18 @@ class YahooClient:
         """
         try:
             ticker = yf.Ticker(symbol)
-            
+
             # Access sustainability data - this may raise HTTPError for 404
             try:
                 esg_df = ticker.sustainability
             except Exception as http_error:
                 # Handle HTTP errors (like 404) that occur when accessing sustainability
                 error_str = str(http_error).lower()
-                if "404" in error_str or "not found" in error_str or "http error" in error_str:
+                if (
+                    "404" in error_str
+                    or "not found" in error_str
+                    or "http error" in error_str
+                ):
                     logger.debug(f"No ESG data available for {symbol} (404)")
                     return None
                 # Re-raise if it's not a 404
@@ -661,14 +685,16 @@ class YahooClient:
             # The sustainability DataFrame has metrics as rows, values as columns
             # After transpose, we can access values by metric name
             esg_transposed = pd.DataFrame.transpose(esg_df)
-            
+
             if esg_transposed.empty:
                 logger.debug(f"Transposed ESG DataFrame is empty for {symbol}")
                 return None
 
             # Get the first row which contains all the ESG values
             # The transposed DataFrame has one row with all the metric values
-            esg_data = esg_transposed.iloc[0].to_dict() if not esg_transposed.empty else {}
+            esg_data = (
+                esg_transposed.iloc[0].to_dict() if not esg_transposed.empty else {}
+            )
 
             logger.debug(f"ESG data keys for {symbol}: {list(esg_data.keys())}")
 
@@ -693,7 +719,11 @@ class YahooClient:
             # HTTP 404 is expected when ESG data is not available for a symbol
             # This is normal behavior - not all symbols have ESG data
             error_str = str(e).lower()
-            if "404" in error_str or "not found" in error_str or "http error" in error_str:
+            if (
+                "404" in error_str
+                or "not found" in error_str
+                or "http error" in error_str
+            ):
                 # Silently handle 404 - this is expected for symbols without ESG data
                 logger.debug(f"No ESG data available for {symbol}")
             else:

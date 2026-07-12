@@ -17,6 +17,7 @@ class TestSettingsInitialization:
         # Set explicit environment variables to test defaults (override .env)
         default_env = {
             "TRADING_DB_NAME": "trading_system",  # Override test .env value
+            "DISABLE_ENV_FILE": "true",
         }
         with patch.dict("os.environ", default_env, clear=True):
             settings = Settings()
@@ -229,7 +230,7 @@ class TestGetSettings:
 
     def test_get_settings_creates_instance(self):
         """Test that get_settings creates Settings instance"""
-        with patch.dict("os.environ", {}, clear=True):
+        with patch.dict("os.environ", {"DISABLE_ENV_FILE": "true"}, clear=True):
             # Reset the global settings
             import src.config.settings
 

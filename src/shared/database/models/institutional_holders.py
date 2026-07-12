@@ -62,7 +62,7 @@ class InstitutionalHolder(Base):
     value: Mapped[Optional[int]] = mapped_column(BigInteger)
     percent_held: Mapped[Optional[float]] = mapped_column(Numeric(10, 4))
     percent_change: Mapped[Optional[float]] = mapped_column(Numeric(10, 4))
-    
+
     # Flag to indicate latest record for this holder
     is_latest: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
@@ -131,7 +131,7 @@ class InstitutionalHolder(Base):
         if self.percent_held is None:
             return "N/A"
         return f"{float(self.percent_held) * 100:.2f}%"
-    
+
     @property
     def percent_change_display(self) -> str:
         """Display percentage change with arrow indicators"""
@@ -154,9 +154,13 @@ class InstitutionalHolder(Base):
             "shares_display": self.shares_display,
             "value": self.value,
             "value_display": self.value_display,
-            "percent_held": float(self.percent_held) if self.percent_held is not None else None,
+            "percent_held": float(self.percent_held)
+            if self.percent_held is not None
+            else None,
             "percent_held_display": self.percent_held_display,
-            "percent_change": float(self.percent_change) if self.percent_change is not None else None,
+            "percent_change": float(self.percent_change)
+            if self.percent_change is not None
+            else None,
             "percent_change_display": self.percent_change_display,
             "is_latest": self.is_latest,
             "data_source": self.data_source,

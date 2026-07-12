@@ -76,9 +76,7 @@ class LoggingConfig(BaseModel):
     rotation: LogRotationConfig = Field(default_factory=LogRotationConfig)
 
     # Log Format
-    format: str = (
-        "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} | {message}"
-    )
+    format: str = "{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} | {message}"
 
     # Log Files
     files: LogFilesConfig = Field(default_factory=LogFilesConfig)

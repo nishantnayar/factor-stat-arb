@@ -7,7 +7,7 @@ with synthetic price series.
 """
 
 from datetime import date, datetime, timezone
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest

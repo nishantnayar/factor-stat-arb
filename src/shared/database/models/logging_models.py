@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy import BigInteger, DateTime, Index, Numeric, String, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ...utils.timezone import ensure_utc_timestamp
@@ -20,7 +20,7 @@ from ..base import Base
 class SystemLog(Base):
     """
     System log entries for general application logging
-    
+
     Stores structured log data with:
     - Service identification
     - Log levels (DEBUG, INFO, WARNING, ERROR, CRITICAL)
@@ -85,7 +85,7 @@ class SystemLog(Base):
 class PerformanceLog(Base):
     """
     Performance log entries for monitoring system performance
-    
+
     Stores performance metrics with:
     - Service and operation identification
     - Execution time measurements
@@ -112,9 +112,7 @@ class PerformanceLog(Base):
     operation: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
 
     # Execution time in milliseconds
-    execution_time_ms: Mapped[float] = mapped_column(
-        Numeric(10, 3), nullable=False
-    )
+    execution_time_ms: Mapped[float] = mapped_column(Numeric(10, 3), nullable=False)
 
     # Memory usage in MB (optional)
     memory_usage_mb: Mapped[Optional[float]] = mapped_column(
@@ -139,4 +137,3 @@ class PerformanceLog(Base):
             f"<PerformanceLog(id={self.id}, service='{self.service}', "
             f"operation='{self.operation}', execution_time_ms={self.execution_time_ms})>"
         )
-

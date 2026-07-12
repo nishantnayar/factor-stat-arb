@@ -7,8 +7,6 @@ from datetime import datetime, timezone
 from decimal import Decimal
 
 from src.shared.database.base import (
-    db_readonly_session,
-    db_transaction,
     execute_in_transaction,
     execute_readonly,
 )
@@ -146,7 +144,7 @@ def example_analytics_query():
         ]
 
         total_value = sum(record["current_value"] for record in summary)
-        print(f"Portfolio Summary:")
+        print("Portfolio Summary:")
         for record in summary:
             print(
                 f"  {record['symbol']}: {record['quantity']} shares @ ${record['avg_price']} = ${record['current_value']}"

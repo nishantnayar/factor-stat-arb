@@ -14,23 +14,19 @@ import threading
 import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from uuid import uuid4
 
 from loguru import logger as loguru_logger
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
 
-from src.config.database import get_engine, get_service_engine
-from src.shared.database.base import db_transaction
+from src.config.database import get_service_engine
 from src.shared.database.models.logging_models import PerformanceLog, SystemLog
-from src.shared.logging.formatters import format_for_database
 from src.shared.utils.timezone import ensure_utc_timestamp
 
 
 class LogQueueManager:
     """
     Manages async queue-based logging with batch writes
-    
+
     Features:
     - Non-blocking log writes via queue
     - Automatic batching for efficient database inserts
@@ -109,15 +105,15 @@ class LogQueueManager:
         if self.worker_thread and self.worker_thread.is_alive():
             # Give worker thread time to process remaining items
             self.worker_thread.join(timeout=timeout)
-            
+
             if self.worker_thread.is_alive():
                 print(
                     f"WARNING: Log queue worker thread did not stop within {timeout}s timeout",
-                    file=sys.stderr
+                    file=sys.stderr,
                 )
                 # Force flush any remaining items
                 self._flush_batch()
-        
+
         # Flush any remaining items in queue (safety net)
         remaining = []
         try:
@@ -128,9 +124,11 @@ class LogQueueManager:
                     break
         except Exception as e:
             print(f"Error getting remaining logs from queue: {e}", file=sys.stderr)
-        
+
         if remaining:
-            print(f"Flushing {len(remaining)} remaining logs from queue", file=sys.stderr)
+            print(
+                f"Flushing {len(remaining)} remaining logs from queue", file=sys.stderr
+            )
             try:
                 self._write_batch_to_database(remaining)
                 self.stats["logs_written"] += len(remaining)
@@ -141,10 +139,7 @@ class LogQueueManager:
         # Final flush of batch buffer
         self._flush_batch()
 
-        print(
-            f"Log queue manager stopped. Stats: {self.stats}",
-            file=sys.stderr
-        )
+        print(f"Log queue manager stopped. Stats: {self.stats}", file=sys.stderr)
 
     def enqueue_log(self, log_record: Dict[str, Any]) -> bool:
         """
@@ -201,7 +196,7 @@ class LogQueueManager:
                 with self.batch_lock:
                     self.batch_buffer.append(log_record)
                     batch_full = len(self.batch_buffer) >= self.batch_size
-                
+
                 # Flush outside lock if batch is full
                 if batch_full:
                     self._flush_batch()
@@ -263,6 +258,7 @@ class LogQueueManager:
             # Use logging schema engine for proper schema access
             engine = get_service_engine("logging")
             from sqlalchemy.orm import sessionmaker
+
             SessionLocal = sessionmaker(bind=engine)
             session = SessionLocal()
 
@@ -286,13 +282,17 @@ class LogQueueManager:
                 if system_logs:
                     session.add_all(system_logs)
                     session.flush()
-                    loguru_logger.debug(f"Flushed {len(system_logs)} system logs to session")
+                    loguru_logger.debug(
+                        f"Flushed {len(system_logs)} system logs to session"
+                    )
 
                 # Add performance logs to session
                 if performance_logs:
                     session.add_all(performance_logs)
                     session.flush()
-                    loguru_logger.debug(f"Flushed {len(performance_logs)} performance logs to session")
+                    loguru_logger.debug(
+                        f"Flushed {len(performance_logs)} performance logs to session"
+                    )
 
                 # Commit the transaction
                 session.commit()
@@ -305,7 +305,9 @@ class LogQueueManager:
 
             except Exception as e:
                 session.rollback()
-                loguru_logger.error(f"Error in database transaction, rolling back: {e}", exc_info=True)
+                loguru_logger.error(
+                    f"Error in database transaction, rolling back: {e}", exc_info=True
+                )
                 raise
             finally:
                 session.close()
@@ -334,14 +336,14 @@ class LogQueueManager:
             data = record.get("metadata", {})
             if not isinstance(data, dict):
                 data = {}
-            
+
             # data is now guaranteed to be a dict (not None) after the check above
 
             # Get values from formatted record (format_for_database already handles fallbacks)
             service = record.get("service", "unknown")
             correlation_id = record.get("correlation_id")  # Can be None
             event_type = record.get("event_type")  # Can be None
-            
+
             return SystemLog(
                 service=service,
                 level=record.get("level", "INFO"),
@@ -373,10 +375,18 @@ class LogQueueManager:
             # For performance logs, metadata might contain the performance metrics
             metadata = record.get("metadata", {})
             if isinstance(metadata, dict):
-                operation = record.get("operation") or metadata.get("operation", "unknown")
-                execution_time_ms = record.get("execution_time_ms") or metadata.get("execution_time_ms", 0)
-                memory_usage_mb = record.get("memory_usage_mb") or metadata.get("memory_usage_mb")
-                cpu_usage_percent = record.get("cpu_usage_percent") or metadata.get("cpu_usage_percent")
+                operation = record.get("operation") or metadata.get(
+                    "operation", "unknown"
+                )
+                execution_time_ms = record.get("execution_time_ms") or metadata.get(
+                    "execution_time_ms", 0
+                )
+                memory_usage_mb = record.get("memory_usage_mb") or metadata.get(
+                    "memory_usage_mb"
+                )
+                cpu_usage_percent = record.get("cpu_usage_percent") or metadata.get(
+                    "cpu_usage_percent"
+                )
             else:
                 operation = record.get("operation", "unknown")
                 execution_time_ms = record.get("execution_time_ms", 0)
@@ -387,8 +397,12 @@ class LogQueueManager:
                 service=record.get("service", "unknown"),
                 operation=operation,
                 execution_time_ms=float(execution_time_ms),
-                memory_usage_mb=float(memory_usage_mb) if memory_usage_mb is not None else None,
-                cpu_usage_percent=float(cpu_usage_percent) if cpu_usage_percent is not None else None,
+                memory_usage_mb=float(memory_usage_mb)
+                if memory_usage_mb is not None
+                else None,
+                cpu_usage_percent=float(cpu_usage_percent)
+                if cpu_usage_percent is not None
+                else None,
                 timestamp=timestamp,
             )
         except Exception as e:
@@ -469,4 +483,3 @@ def shutdown_queue_manager() -> None:
         if _queue_manager is not None:
             _queue_manager.stop()
             _queue_manager = None
-

@@ -6,8 +6,7 @@ and enqueues them for async database writing.
 """
 
 import sys
-from typing import Any, Callable
-from uuid import uuid4
+from typing import Any
 
 from .database_handler import LogQueueManager
 from .formatters import format_for_database
@@ -16,7 +15,7 @@ from .formatters import format_for_database
 class DatabaseSink:
     """
     Loguru sink class that writes logs to database via async queue
-    
+
     Implements both write() and __call__() methods to work with
     different loguru configurations.
     """
@@ -54,7 +53,7 @@ class DatabaseSink:
                 if self._error_count == 0:
                     print(
                         f"WARNING: Unknown message format: {type(message)}",
-                        file=sys.stderr
+                        file=sys.stderr,
                     )
                 self._error_count += 1
                 return
@@ -74,7 +73,7 @@ class DatabaseSink:
 
             # Format record for database
             db_record = format_for_database(record_dict)
-            
+
             # Enqueue for async processing
             if self.queue_manager:
                 success = self.queue_manager.enqueue_log(db_record)
@@ -90,7 +89,7 @@ class DatabaseSink:
                 if self._error_count == 0:
                     print(
                         "WARNING: Database sink queue manager not available",
-                        file=sys.stderr
+                        file=sys.stderr,
                     )
                 self._error_count += 1
 
@@ -100,9 +99,10 @@ class DatabaseSink:
             self._error_count += 1
             if self._error_count <= 3:
                 import traceback
+
                 print(
                     f"Database sink error #{self._error_count}: {type(e).__name__}: {e}",
-                    file=sys.stderr
+                    file=sys.stderr,
                 )
                 if self._error_count == 1:
                     # Debug info for first error
@@ -110,17 +110,14 @@ class DatabaseSink:
                         print(
                             f"  Message type: {type(message)}, "
                             f"Has record: {hasattr(message, 'record')}",
-                            file=sys.stderr
+                            file=sys.stderr,
                         )
                         if hasattr(message, "record"):
                             print(
                                 f"  Record type: {type(message.record)}",
-                                file=sys.stderr
+                                file=sys.stderr,
                             )
-                        print(
-                            f"  Traceback: {traceback.format_exc()}",
-                            file=sys.stderr
-                        )
+                        print(f"  Traceback: {traceback.format_exc()}", file=sys.stderr)
                     except Exception:
                         pass
 
@@ -130,7 +127,7 @@ def create_database_sink(
 ) -> DatabaseSink:
     """
     Create a database sink for loguru
-    
+
     Returns a DatabaseSink instance that implements both write() and __call__()
     methods to work with different loguru configurations.
 
@@ -142,4 +139,3 @@ def create_database_sink(
         DatabaseSink instance that receives loguru message objects
     """
     return DatabaseSink(queue_manager, fallback_to_file)
-

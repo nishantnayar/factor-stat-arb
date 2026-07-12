@@ -9,7 +9,6 @@ Z-score:         z = (spread - rolling_mean) / rolling_std
 The z-score window is typically 2x the half-life of mean reversion (in hours).
 """
 
-from datetime import datetime
 from typing import Optional, Tuple
 
 import numpy as np
@@ -73,8 +72,12 @@ class SpreadCalculator:
         log_p2 = np.log(aligned["p2"])
         spread = log_p1 - self.hedge_ratio * log_p2
 
-        roll_mean = spread.rolling(window=self.z_score_window, min_periods=self.z_score_window).mean()
-        roll_std = spread.rolling(window=self.z_score_window, min_periods=self.z_score_window).std()
+        roll_mean = spread.rolling(
+            window=self.z_score_window, min_periods=self.z_score_window
+        ).mean()
+        roll_std = spread.rolling(
+            window=self.z_score_window, min_periods=self.z_score_window
+        ).std()
 
         # Avoid division by zero
         z_score = (spread - roll_mean) / roll_std.replace(0, np.nan)

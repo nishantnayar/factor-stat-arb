@@ -129,13 +129,13 @@ def format_for_database(record: LogRecord) -> Dict[str, Any]:
 
     # Check if this is a performance log
     log_type = record["extra"].get("log_type", "system")
-    
+
     # Detect service from module name if not in extra context
     service = record["extra"].get("service")
     if not service:
         # Try to detect from module name (record["name"] contains the module path)
         service = detect_service_from_module(record["name"])
-    
+
     # Get correlation_id from extra context or thread-local context
     correlation_id = record["extra"].get("correlation_id")
     if not correlation_id:
@@ -145,11 +145,13 @@ def format_for_database(record: LogRecord) -> Dict[str, Any]:
         # (This ensures every log has a correlation_id for tracking)
         if not correlation_id:
             from uuid import uuid4
+
             correlation_id = str(uuid4())
             # Store it in thread-local context so subsequent logs in same thread use same ID
             from src.shared.logging.correlation import set_correlation_id
+
             set_correlation_id(correlation_id)
-    
+
     # Get event_type from extra context, or infer from log level
     event_type = record["extra"].get("event_type")
     if not event_type:
@@ -163,7 +165,7 @@ def format_for_database(record: LogRecord) -> Dict[str, Any]:
             "CRITICAL": "critical",
         }
         event_type = event_type_map.get(level_name, "unknown")
-    
+
     db_record = {
         "timestamp": timestamp,
         "level": record["level"].name,
@@ -178,10 +180,18 @@ def format_for_database(record: LogRecord) -> Dict[str, Any]:
     # For performance logs, add performance-specific fields
     if log_type == "performance":
         metadata = extract_metadata(record)
-        db_record["operation"] = record["extra"].get("operation") or metadata.get("operation", "unknown")
-        db_record["execution_time_ms"] = record["extra"].get("execution_time_ms") or metadata.get("execution_time_ms", 0)
-        db_record["memory_usage_mb"] = record["extra"].get("memory_usage_mb") or metadata.get("memory_usage_mb")
-        db_record["cpu_usage_percent"] = record["extra"].get("cpu_usage_percent") or metadata.get("cpu_usage_percent")
+        db_record["operation"] = record["extra"].get("operation") or metadata.get(
+            "operation", "unknown"
+        )
+        db_record["execution_time_ms"] = record["extra"].get(
+            "execution_time_ms"
+        ) or metadata.get("execution_time_ms", 0)
+        db_record["memory_usage_mb"] = record["extra"].get(
+            "memory_usage_mb"
+        ) or metadata.get("memory_usage_mb")
+        db_record["cpu_usage_percent"] = record["extra"].get(
+            "cpu_usage_percent"
+        ) or metadata.get("cpu_usage_percent")
 
     return db_record
 

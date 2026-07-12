@@ -322,6 +322,7 @@ class TestLoggingIntegration:
 
         # Give async queue time to process logs
         import time
+
         time.sleep(0.5)  # Allow queue worker to process batch
 
         # Check if log directory exists (it should be created by the logging setup)
@@ -334,7 +335,7 @@ class TestLoggingIntegration:
                 # Error log should exist but may be empty if no errors occurred
                 # This is expected behavior with database-first logging
                 pass
-            
+
             # The test passes if logging doesn't crash
             # Database logging is the primary method, file logging is fallback only
             logger.info("Logging working - database is primary storage")

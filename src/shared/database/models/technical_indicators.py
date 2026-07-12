@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 class TechnicalIndicatorsLatest(Base):
     """
     Latest technical indicator values for fast screening queries
-    
+
     Stores the most recent calculated indicator values for each symbol.
     Updated daily after market close via scheduled Prefect flows.
     Uses only Yahoo Finance data (data_source = 'yahoo') for calculations.
@@ -53,7 +53,9 @@ class TechnicalIndicatorsLatest(Base):
 
     # Momentum Indicators
     rsi: Mapped[Optional[float]] = mapped_column(Numeric(5, 2))  # 0-100
-    rsi_14: Mapped[Optional[float]] = mapped_column(Numeric(5, 2))  # Explicit 14-period RSI
+    rsi_14: Mapped[Optional[float]] = mapped_column(
+        Numeric(5, 2)
+    )  # Explicit 14-period RSI
 
     # MACD
     macd_line: Mapped[Optional[float]] = mapped_column(Numeric(15, 4))
@@ -65,13 +67,23 @@ class TechnicalIndicatorsLatest(Base):
     bb_middle: Mapped[Optional[float]] = mapped_column(Numeric(15, 4))
     bb_lower: Mapped[Optional[float]] = mapped_column(Numeric(15, 4))
     bb_position: Mapped[Optional[float]] = mapped_column(Numeric(5, 4))  # 0-1
-    bb_width: Mapped[Optional[float]] = mapped_column(Numeric(10, 4))  # Band width as percentage
+    bb_width: Mapped[Optional[float]] = mapped_column(
+        Numeric(10, 4)
+    )  # Band width as percentage
 
     # Volatility & Price Changes
-    volatility_20: Mapped[Optional[float]] = mapped_column(Numeric(5, 2))  # Annualized volatility %
-    price_change_1d: Mapped[Optional[float]] = mapped_column(Numeric(5, 2))  # 1-day price change %
-    price_change_5d: Mapped[Optional[float]] = mapped_column(Numeric(5, 2))  # 5-day price change %
-    price_change_30d: Mapped[Optional[float]] = mapped_column(Numeric(5, 2))  # 30-day price change %
+    volatility_20: Mapped[Optional[float]] = mapped_column(
+        Numeric(5, 2)
+    )  # Annualized volatility %
+    price_change_1d: Mapped[Optional[float]] = mapped_column(
+        Numeric(5, 2)
+    )  # 1-day price change %
+    price_change_5d: Mapped[Optional[float]] = mapped_column(
+        Numeric(5, 2)
+    )  # 5-day price change %
+    price_change_30d: Mapped[Optional[float]] = mapped_column(
+        Numeric(5, 2)
+    )  # 30-day price change %
 
     # Volume Indicators
     avg_volume_20: Mapped[Optional[int]] = mapped_column(BigInteger)
@@ -116,7 +128,9 @@ class TechnicalIndicatorsLatest(Base):
             # MACD
             "macd_line": float(self.macd_line) if self.macd_line else None,
             "macd_signal": float(self.macd_signal) if self.macd_signal else None,
-            "macd_histogram": float(self.macd_histogram) if self.macd_histogram else None,
+            "macd_histogram": float(self.macd_histogram)
+            if self.macd_histogram
+            else None,
             # Bollinger Bands
             "bb_upper": float(self.bb_upper) if self.bb_upper else None,
             "bb_middle": float(self.bb_middle) if self.bb_middle else None,
@@ -125,9 +139,15 @@ class TechnicalIndicatorsLatest(Base):
             "bb_width": float(self.bb_width) if self.bb_width else None,
             # Volatility & Price Changes
             "volatility_20": float(self.volatility_20) if self.volatility_20 else None,
-            "price_change_1d": float(self.price_change_1d) if self.price_change_1d else None,
-            "price_change_5d": float(self.price_change_5d) if self.price_change_5d else None,
-            "price_change_30d": float(self.price_change_30d) if self.price_change_30d else None,
+            "price_change_1d": float(self.price_change_1d)
+            if self.price_change_1d
+            else None,
+            "price_change_5d": float(self.price_change_5d)
+            if self.price_change_5d
+            else None,
+            "price_change_30d": float(self.price_change_30d)
+            if self.price_change_30d
+            else None,
             # Volume
             "avg_volume_20": self.avg_volume_20,
             "current_volume": self.current_volume,
@@ -138,7 +158,7 @@ class TechnicalIndicatorsLatest(Base):
 class TechnicalIndicators(Base):
     """
     Historical time-series of technical indicators
-    
+
     Stores daily calculated indicator values for historical analysis and backtesting.
     Uses only Yahoo Finance data (data_source = 'yahoo') for calculations.
     """
@@ -174,7 +194,9 @@ class TechnicalIndicators(Base):
 
     # Momentum Indicators
     rsi: Mapped[Optional[float]] = mapped_column(Numeric(5, 2))  # 0-100
-    rsi_14: Mapped[Optional[float]] = mapped_column(Numeric(5, 2))  # Explicit 14-period RSI
+    rsi_14: Mapped[Optional[float]] = mapped_column(
+        Numeric(5, 2)
+    )  # Explicit 14-period RSI
 
     # MACD
     macd_line: Mapped[Optional[float]] = mapped_column(Numeric(15, 4))
@@ -186,13 +208,23 @@ class TechnicalIndicators(Base):
     bb_middle: Mapped[Optional[float]] = mapped_column(Numeric(15, 4))
     bb_lower: Mapped[Optional[float]] = mapped_column(Numeric(15, 4))
     bb_position: Mapped[Optional[float]] = mapped_column(Numeric(5, 4))  # 0-1
-    bb_width: Mapped[Optional[float]] = mapped_column(Numeric(10, 4))  # Band width as percentage
+    bb_width: Mapped[Optional[float]] = mapped_column(
+        Numeric(10, 4)
+    )  # Band width as percentage
 
     # Volatility & Price Changes
-    volatility_20: Mapped[Optional[float]] = mapped_column(Numeric(5, 2))  # Annualized volatility %
-    price_change_1d: Mapped[Optional[float]] = mapped_column(Numeric(5, 2))  # 1-day price change %
-    price_change_5d: Mapped[Optional[float]] = mapped_column(Numeric(5, 2))  # 5-day price change %
-    price_change_30d: Mapped[Optional[float]] = mapped_column(Numeric(5, 2))  # 30-day price change %
+    volatility_20: Mapped[Optional[float]] = mapped_column(
+        Numeric(5, 2)
+    )  # Annualized volatility %
+    price_change_1d: Mapped[Optional[float]] = mapped_column(
+        Numeric(5, 2)
+    )  # 1-day price change %
+    price_change_5d: Mapped[Optional[float]] = mapped_column(
+        Numeric(5, 2)
+    )  # 5-day price change %
+    price_change_30d: Mapped[Optional[float]] = mapped_column(
+        Numeric(5, 2)
+    )  # 30-day price change %
 
     # Volume Indicators
     avg_volume_20: Mapped[Optional[int]] = mapped_column(BigInteger)
@@ -237,7 +269,9 @@ class TechnicalIndicators(Base):
             # MACD
             "macd_line": float(self.macd_line) if self.macd_line else None,
             "macd_signal": float(self.macd_signal) if self.macd_signal else None,
-            "macd_histogram": float(self.macd_histogram) if self.macd_histogram else None,
+            "macd_histogram": float(self.macd_histogram)
+            if self.macd_histogram
+            else None,
             # Bollinger Bands
             "bb_upper": float(self.bb_upper) if self.bb_upper else None,
             "bb_middle": float(self.bb_middle) if self.bb_middle else None,
@@ -246,12 +280,17 @@ class TechnicalIndicators(Base):
             "bb_width": float(self.bb_width) if self.bb_width else None,
             # Volatility & Price Changes
             "volatility_20": float(self.volatility_20) if self.volatility_20 else None,
-            "price_change_1d": float(self.price_change_1d) if self.price_change_1d else None,
-            "price_change_5d": float(self.price_change_5d) if self.price_change_5d else None,
-            "price_change_30d": float(self.price_change_30d) if self.price_change_30d else None,
+            "price_change_1d": float(self.price_change_1d)
+            if self.price_change_1d
+            else None,
+            "price_change_5d": float(self.price_change_5d)
+            if self.price_change_5d
+            else None,
+            "price_change_30d": float(self.price_change_30d)
+            if self.price_change_30d
+            else None,
             # Volume
             "avg_volume_20": self.avg_volume_20,
             "current_volume": self.current_volume,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
-

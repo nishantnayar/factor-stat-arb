@@ -50,7 +50,9 @@ class ESGScore(Base):
     environment_score: Mapped[Optional[Decimal]] = mapped_column(
         Numeric(5, 2), nullable=True
     )
-    social_score: Mapped[Optional[Decimal]] = mapped_column(Numeric(5, 2), nullable=True)
+    social_score: Mapped[Optional[Decimal]] = mapped_column(
+        Numeric(5, 2), nullable=True
+    )
     governance_score: Mapped[Optional[Decimal]] = mapped_column(
         Numeric(5, 2), nullable=True
     )
@@ -153,4 +155,3 @@ class ESGScore(Base):
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }
-

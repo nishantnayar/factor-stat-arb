@@ -301,7 +301,6 @@ class TestYahooDataLoader:
             ),
             patch("src.services.yahoo.loader.db_transaction") as mock_db,
         ):
-
             # Setup mock session
             mock_session = Mock()
             mock_db.return_value.__enter__.return_value = mock_session
@@ -331,7 +330,6 @@ class TestYahooDataLoader:
             patch("src.services.yahoo.loader.db_transaction") as mock_db,
             patch("src.services.yahoo.loader.insert") as mock_insert,
         ):
-
             # Setup mock session
             mock_session = Mock()
             mock_db.return_value.__enter__.return_value = mock_session
@@ -371,7 +369,6 @@ class TestYahooDataLoader:
             patch("src.services.yahoo.loader.insert") as mock_insert,
             patch("sqlalchemy.select") as mock_select,
         ):
-
             # Setup mock session
             mock_session = Mock()
             mock_db.return_value.__enter__.return_value = mock_session
@@ -393,7 +390,7 @@ class TestYahooDataLoader:
             mock_select_order.order_by.return_value = mock_select_limit
             mock_select_where.where.return_value = mock_select_order
             mock_select.return_value = mock_select_where
-            
+
             # Mock insert/upsert statement chain
             # insert(InstitutionalHolder).values(...).on_conflict_do_update(...)
             mock_insert_upsert = Mock()
@@ -409,10 +406,13 @@ class TestYahooDataLoader:
             # For select statements, it needs scalar_one_or_none() which returns None
             # For update and insert, they don't use the return value, so any Mock works
             mock_execute_result = Mock()
-            mock_execute_result.scalar_one_or_none.return_value = None  # For select statements
-            
+            mock_execute_result.scalar_one_or_none.return_value = (
+                None  # For select statements
+            )
+
             # Track executed statements to identify selects
             executed_statements = []
+
             def execute_side_effect(stmt):
                 executed_statements.append(stmt)
                 # All statements return the same result (which has scalar_one_or_none for selects)
@@ -463,7 +463,6 @@ class TestYahooDataLoader:
             patch("src.services.yahoo.loader.db_transaction") as mock_db,
             patch("src.services.yahoo.loader.insert") as mock_insert,
         ):
-
             # Setup mock session
             mock_session = Mock()
             mock_db.return_value.__enter__.return_value = mock_session
@@ -511,7 +510,6 @@ class TestYahooDataLoader:
             patch("src.services.yahoo.loader.db_transaction") as mock_db,
             patch("src.services.yahoo.loader.insert") as mock_insert,
         ):
-
             # Setup mock session
             mock_session = Mock()
             mock_db.return_value.__enter__.return_value = mock_session
@@ -545,13 +543,10 @@ class TestYahooDataLoader:
     async def test_load_dividends_success(self, loader, mock_dividends):
         """Test successful loading of dividends"""
         with (
-            patch.object(
-                loader.client, "get_dividends", return_value=mock_dividends
-            ),
+            patch.object(loader.client, "get_dividends", return_value=mock_dividends),
             patch("src.services.yahoo.loader.db_transaction") as mock_db,
             patch("src.services.yahoo.loader.insert") as mock_insert,
         ):
-
             # Setup mock session
             mock_session = Mock()
             mock_db.return_value.__enter__.return_value = mock_session
@@ -606,13 +601,10 @@ class TestYahooDataLoader:
     async def test_load_splits_success(self, loader, mock_stock_splits):
         """Test successful loading of stock splits"""
         with (
-            patch.object(
-                loader.client, "get_splits", return_value=mock_stock_splits
-            ),
+            patch.object(loader.client, "get_splits", return_value=mock_stock_splits),
             patch("src.services.yahoo.loader.db_transaction") as mock_db,
             patch("src.services.yahoo.loader.insert") as mock_insert,
         ):
-
             # Setup mock session
             mock_session = Mock()
             mock_db.return_value.__enter__.return_value = mock_session
@@ -677,7 +669,6 @@ class TestYahooDataLoader:
             patch("src.services.yahoo.loader.db_transaction") as mock_db,
             patch("src.services.yahoo.loader.insert") as mock_insert,
         ):
-
             # Setup mock session
             mock_session = Mock()
             mock_db.return_value.__enter__.return_value = mock_session
@@ -736,7 +727,6 @@ class TestYahooDataLoader:
             patch.object(loader, "load_analyst_recommendations", return_value=0),
             patch.object(loader, "load_esg_scores", return_value=True),
         ):
-
             result = await loader.load_all_data("AAPL")
 
             # The method returns counts/status indicators, not the actual data objects
@@ -768,7 +758,6 @@ class TestYahooDataLoader:
             patch.object(loader, "load_analyst_recommendations", return_value=3),
             patch.object(loader, "load_esg_scores", return_value=True),
         ):
-
             result = await loader.load_all_data(
                 "AAPL",
                 include_fundamentals=True,  # Need to enable fundamentals to load company_info
@@ -789,7 +778,9 @@ class TestYahooDataLoader:
             assert result["company_officers"] == 0
             assert result["dividends"] == 5  # Count of dividends loaded
             assert result["splits"] == 0  # Not loaded
-            assert result["analyst_recommendations"] == 3  # Count of recommendations loaded
+            assert (
+                result["analyst_recommendations"] == 3
+            )  # Count of recommendations loaded
             assert result["esg_scores"] == 1  # True gets converted to 1
 
     @pytest.mark.asyncio
@@ -800,35 +791,16 @@ class TestYahooDataLoader:
             patch.object(
                 loader, "load_market_data", return_value=10
             ) as mock_market_data,
-            patch.object(
-                loader, "load_company_info", return_value=True
-            ) as mock_company_info,
-            patch.object(
-                loader, "load_key_statistics", return_value=True
-            ) as mock_key_stats,
-            patch.object(
-                loader, "load_institutional_holders", return_value=5
-            ) as mock_holders,
-            patch.object(
-                loader, "load_financial_statements", return_value=[]
-            ) as mock_financial,
-            patch.object(
-                loader, "load_company_officers", return_value=3
-            ) as mock_officers,
-            patch.object(
-                loader, "load_dividends", return_value=4
-            ) as mock_dividends,
-            patch.object(
-                loader, "load_splits", return_value=1
-            ) as mock_splits,
-            patch.object(
-                loader, "load_analyst_recommendations", return_value=2
-            ) as mock_analyst_recs,
-            patch.object(
-                loader, "load_esg_scores", return_value=True
-            ) as mock_esg_scores,
+            patch.object(loader, "load_company_info", return_value=True),
+            patch.object(loader, "load_key_statistics", return_value=True),
+            patch.object(loader, "load_institutional_holders", return_value=5),
+            patch.object(loader, "load_financial_statements", return_value=[]),
+            patch.object(loader, "load_company_officers", return_value=3),
+            patch.object(loader, "load_dividends", return_value=4),
+            patch.object(loader, "load_splits", return_value=1),
+            patch.object(loader, "load_analyst_recommendations", return_value=2),
+            patch.object(loader, "load_esg_scores", return_value=True),
         ):
-
             result = await loader.load_all_symbols_data()
 
             # The method returns a statistics dictionary, not a dictionary with symbol keys.
@@ -836,7 +808,9 @@ class TestYahooDataLoader:
             assert result["total_symbols"] == 2
             assert result["successful"] == 2
             assert result["failed"] == 0
-            assert result["total_records"] == 40  # 2 symbols x (10 + 10) unadjusted + adjusted
+            assert (
+                result["total_records"] == 40
+            )  # 2 symbols x (10 + 10) unadjusted + adjusted
             assert mock_market_data.call_count == 4  # 2 calls per symbol
 
     @pytest.mark.asyncio
@@ -853,11 +827,8 @@ class TestYahooDataLoader:
             patch.object(
                 loader, "load_institutional_holders", return_value=8
             ) as mock_holders,
-            patch.object(
-                loader, "load_dividends", return_value=3
-            ) as mock_dividends,
+            patch.object(loader, "load_dividends", return_value=3) as mock_dividends,
         ):
-
             result = await loader.load_all_symbols_data(
                 include_key_statistics=True,
                 include_institutional_holders=True,
@@ -868,7 +839,9 @@ class TestYahooDataLoader:
             assert result["total_symbols"] == 1
             assert result["successful"] == 1
             assert result["failed"] == 0
-            assert result["total_records"] == 30  # 1 symbol x (15 + 15) unadjusted + adjusted
+            assert (
+                result["total_records"] == 30
+            )  # 1 symbol x (15 + 15) unadjusted + adjusted
             assert mock_market_data.call_count == 2
             assert mock_key_stats.call_count == 1
             assert mock_holders.call_count == 1
@@ -1092,7 +1065,6 @@ class TestYahooDataLoader:
             patch("src.services.yahoo.loader.db_transaction") as mock_db,
             patch("src.services.yahoo.loader.insert") as mock_insert,
         ):
-
             # Setup mock session
             mock_session = Mock()
             mock_db.return_value.__enter__.return_value = mock_session

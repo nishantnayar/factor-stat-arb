@@ -32,7 +32,12 @@ class TestDatabaseConnections:
         assert db_config.postgres_host == "localhost"
         assert db_config.postgres_port == 5432
         # Check that trading_db_name is set (could be default or from env)
-        assert db_config.trading_db_name in ["trading_system", "trading_system_test"]
+        assert db_config.trading_db_name in [
+            "trading_system",
+            "trading_system_test",
+            "factor_stat_arb",
+            "factor_stat_arb_test",
+        ]
         assert db_config.prefect_db_name == "Prefect"
 
     def test_trading_db_url_generation(self, db_config):

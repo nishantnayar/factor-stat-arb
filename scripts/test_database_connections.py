@@ -5,10 +5,8 @@ Test Database Connections
 This script tests connectivity to both the trading system database and Prefect database.
 """
 
-import asyncio
 import os
 import sys
-from datetime import datetime
 
 # Add project root to path for imports
 project_root = os.path.dirname(os.path.dirname(__file__))
@@ -83,7 +81,9 @@ def test_schema_access():
             with engine.connect() as conn:
                 result = conn.execute(text("SELECT current_schema() as schema_name"))
                 row = result.fetchone()
-                logger.info(f"Schema '{schema_name}' accessible [OK]: {row.schema_name}")
+                logger.info(
+                    f"Schema '{schema_name}' accessible [OK]: {row.schema_name}"
+                )
         except Exception as e:
             logger.error(f"Schema '{schema_name}' not accessible [FAIL]: {e}")
             all_schemas_accessible = False

@@ -16,7 +16,9 @@ class SymbolService:
     """Service for managing symbols and delisting detection"""
 
     def __init__(self) -> None:
-        self._polygon_client = None  # Lazy; polygon is dropped in this repo (Yahoo-only)
+        self._polygon_client = (
+            None  # Lazy; polygon is dropped in this repo (Yahoo-only)
+        )
 
     async def get_active_symbols(self) -> List[Symbol]:
         """Get all active symbols, sorted alphabetically by symbol."""
@@ -100,7 +102,9 @@ class SymbolService:
                 return False
 
             # Check if already in delisted_symbols table
-            delisted_stmt = select(DelistedSymbol).where(DelistedSymbol.symbol == symbol)
+            delisted_stmt = select(DelistedSymbol).where(
+                DelistedSymbol.symbol == symbol
+            )
             delisted_result = session.execute(delisted_stmt)
             existing_delisted = delisted_result.scalar_one_or_none()
 

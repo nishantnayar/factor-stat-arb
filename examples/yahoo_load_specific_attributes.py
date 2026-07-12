@@ -72,25 +72,25 @@ async def load_fundamental_ratios(symbols: list[str]) -> None:
     print("-" * 80)
     for r in results:
         print(
-            f"{r['symbol']:<8} " f"{r['pe_ratio']:>8.2f} "
+            f"{r['symbol']:<8} {r['pe_ratio']:>8.2f} "
             if r["pe_ratio"]
             else (
-                f"{'N/A':>8} " f"{r['peg_ratio']:>8.2f} "
+                f"{'N/A':>8} {r['peg_ratio']:>8.2f} "
                 if r["peg_ratio"]
                 else (
-                    f"{'N/A':>8} " f"{r['price_to_book']:>8.2f} "
+                    f"{'N/A':>8} {r['price_to_book']:>8.2f} "
                     if r["price_to_book"]
                     else (
-                        f"{'N/A':>8} " f"{r['profit_margin']*100:>8.2f} "
+                        f"{'N/A':>8} {r['profit_margin'] * 100:>8.2f} "
                         if r["profit_margin"]
                         else (
-                            f"{'N/A':>8} " f"{r['roe']*100:>8.2f} "
+                            f"{'N/A':>8} {r['roe'] * 100:>8.2f} "
                             if r["roe"]
                             else (
-                                f"{'N/A':>8} " f"{r['debt_to_equity']:>8.2f} "
+                                f"{'N/A':>8} {r['debt_to_equity']:>8.2f} "
                                 if r["debt_to_equity"]
                                 else (
-                                    f"{'N/A':>8} " f"{r['dividend_yield']*100:>8.2f}"
+                                    f"{'N/A':>8} {r['dividend_yield'] * 100:>8.2f}"
                                     if r["dividend_yield"]
                                     else f"{'N/A':>8}"
                                 )
@@ -168,7 +168,7 @@ async def load_financial_health_metrics(symbols: list[str]) -> None:
                 if stats.debt_to_equity
                 else "  Debt/Equity: N/A"
             )
-            print(f"  Interest Coverage: ", end="")
+            print("  Interest Coverage: ", end="")
 
             # Get income statement for interest coverage
             income = await client.get_financial_statements(symbol, "income", "annual")
@@ -222,12 +222,12 @@ async def load_growth_metrics(symbols: list[str]) -> None:
 
             print(f"\n{symbol} Growth:")
             print(
-                f"  Revenue Growth: {stats.revenue_growth*100:.2f}%"
+                f"  Revenue Growth: {stats.revenue_growth * 100:.2f}%"
                 if stats.revenue_growth
                 else "  Revenue Growth: N/A"
             )
             print(
-                f"  Earnings Growth: {stats.earnings_growth*100:.2f}%"
+                f"  Earnings Growth: {stats.earnings_growth * 100:.2f}%"
                 if stats.earnings_growth
                 else "  Earnings Growth: N/A"
             )
@@ -337,12 +337,12 @@ async def load_ownership_data(symbols: list[str]) -> None:
 
             print(f"\n{symbol} Ownership:")
             print(
-                f"  Insider Ownership: {stats.held_percent_insiders*100:.2f}%"
+                f"  Insider Ownership: {stats.held_percent_insiders * 100:.2f}%"
                 if stats.held_percent_insiders
                 else "  Insiders: N/A"
             )
             print(
-                f"  Institutional: {stats.held_percent_institutions*100:.2f}%"
+                f"  Institutional: {stats.held_percent_institutions * 100:.2f}%"
                 if stats.held_percent_institutions
                 else "  Institutions: N/A"
             )
@@ -365,12 +365,12 @@ async def load_ownership_data(symbols: list[str]) -> None:
 
                 if total > 0:
                     buy_pct = (latest.strong_buy + latest.buy) / total * 100
-                    print(f"\n  Analyst Sentiment:")
+                    print("\n  Analyst Sentiment:")
                     print(f"    Total Analysts: {total}")
                     print(f"    Buy/Strong Buy: {buy_pct:.1f}%")
-                    print(f"    Hold: {latest.hold/total*100:.1f}%")
+                    print(f"    Hold: {latest.hold / total * 100:.1f}%")
                     print(
-                        f"    Sell/Strong Sell: {(latest.sell + latest.strong_sell)/total*100:.1f}%"
+                        f"    Sell/Strong Sell: {(latest.sell + latest.strong_sell) / total * 100:.1f}%"
                     )
 
             await asyncio.sleep(0.3)

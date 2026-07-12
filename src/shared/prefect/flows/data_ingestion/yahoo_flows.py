@@ -7,8 +7,6 @@ Prefect flows for loading data from Yahoo Finance.
 import asyncio
 import inspect
 import sys
-from collections.abc import Coroutine
-from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, List, Optional
 

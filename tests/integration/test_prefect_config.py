@@ -60,7 +60,6 @@ def test_prefect_config_connection():
     """Integration test: Verify Prefect can read configuration and connect"""
     try:
         from prefect import get_client
-        from prefect.settings import PREFECT_API_URL
 
         # Get API URL from our config
         api_url = PrefectConfig.get_api_url()

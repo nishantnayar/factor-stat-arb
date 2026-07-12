@@ -76,6 +76,7 @@ class LoggingManager:
         """
         Patch loguru to automatically inject correlation_id and service into log records
         """
+
         def patcher(record: Any) -> None:
             """
             Patcher function that modifies log records before they're processed
@@ -85,7 +86,7 @@ class LoggingManager:
                 # Ensure extra dict exists and is mutable
                 if not hasattr(record, "extra"):
                     return
-                
+
                 # Get correlation_id from thread-local context if not already set
                 if "correlation_id" not in record["extra"]:
                     correlation_id = get_correlation_id()
@@ -94,7 +95,7 @@ class LoggingManager:
                     # Debug: Uncomment to verify patcher is working
                     # else:
                     #     print(f"DEBUG: No correlation_id found for {record['name']}")
-                
+
                 # Detect and inject service if not already set
                 if "service" not in record["extra"]:
                     service = detect_service_from_module(record["name"])
@@ -124,7 +125,7 @@ class LoggingManager:
     def _setup_file_handlers(self) -> None:
         """
         Setup minimal file logging handlers as fallback
-        
+
         Only logs errors to file when database is unavailable.
         This reduces file I/O overhead significantly.
         """
@@ -147,7 +148,9 @@ class LoggingManager:
             enqueue=True,
             backtrace=True,
             diagnose=True,
-            filter=lambda record: record["extra"].get("log_destination") == "file_fallback",
+            filter=lambda record: (
+                record["extra"].get("log_destination") == "file_fallback"
+            ),
         )
 
     def _setup_service_handler(self, service_name: str) -> None:
@@ -175,7 +178,7 @@ class LoggingManager:
     def _setup_database_handler(self) -> None:
         """
         Setup database logging handler with async queue-based batching
-        
+
         This is the primary logging method - all logs go to database
         via an async queue for non-blocking writes.
         """

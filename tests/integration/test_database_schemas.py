@@ -17,7 +17,8 @@ class TestSchemaCreation:
     def test_all_service_schemas_exist(self, trading_engine):
         """Test that all required service schemas exist"""
         with trading_engine.connect() as conn:
-            result = conn.execute(text("""
+            result = conn.execute(
+                text("""
                 SELECT schema_name
                 FROM information_schema.schemata
                 WHERE schema_name IN (
@@ -26,7 +27,8 @@ class TestSchemaCreation:
                     'logging', 'shared'
                 )
                 ORDER BY schema_name
-            """))
+            """)
+            )
             schemas = [row[0] for row in result.fetchall()]
 
             expected_schemas = [
@@ -57,20 +59,24 @@ class TestSchemaCreation:
                 "shared",
             ]:
                 # Create a test table
-                conn.execute(text(f"""
+                conn.execute(
+                    text(f"""
                     CREATE TABLE IF NOT EXISTS {schema}.test_table (
                         id SERIAL PRIMARY KEY,
                         test_column VARCHAR(50)
                     )
-                """))
+                """)
+                )
 
                 # Verify table was created
-                result = conn.execute(text(f"""
+                result = conn.execute(
+                    text(f"""
                     SELECT table_name
                     FROM information_schema.tables
                     WHERE table_schema = '{schema}'
                     AND table_name = 'test_table'
-                """))
+                """)
+                )
                 assert result.fetchone() is not None
 
                 # Clean up test table
@@ -169,18 +175,22 @@ class TestDataIntegrity:
         with trading_engine.connect() as conn:
             with conn.begin():
                 conn.execute(text("CREATE SCHEMA IF NOT EXISTS shared"))
-                conn.execute(text("""
+                conn.execute(
+                    text("""
                         CREATE TABLE IF NOT EXISTS shared.test_fk_parent (
                             id VARCHAR(20) PRIMARY KEY
                         )
-                        """))
-                conn.execute(text("""
+                        """)
+                )
+                conn.execute(
+                    text("""
                         CREATE TABLE IF NOT EXISTS shared.test_fk_child (
                             id SERIAL PRIMARY KEY,
                             parent_id VARCHAR(20)
                                 REFERENCES shared.test_fk_parent(id) ON DELETE CASCADE
                         )
-                        """))
+                        """)
+                )
 
             try:
                 trans = conn.begin()
@@ -204,14 +214,16 @@ class TestDataIntegrity:
         with trading_engine.connect() as conn:
             with conn.begin():
                 conn.execute(text("CREATE SCHEMA IF NOT EXISTS shared"))
-                conn.execute(text("""
+                conn.execute(
+                    text("""
                         CREATE TABLE IF NOT EXISTS shared.test_check_table (
                             id SERIAL PRIMARY KEY,
                             status VARCHAR(20)
                                 CONSTRAINT test_valid_status
                                 CHECK (status IN ('active', 'inactive'))
                         )
-                        """))
+                        """)
+                )
 
             try:
                 trans = conn.begin()
@@ -234,12 +246,14 @@ class TestDataIntegrity:
         with trading_engine.connect() as conn:
             with conn.begin():
                 conn.execute(text("CREATE SCHEMA IF NOT EXISTS shared"))
-                conn.execute(text("""
+                conn.execute(
+                    text("""
                         CREATE TABLE IF NOT EXISTS shared.test_unique_table (
                             id SERIAL PRIMARY KEY,
                             code VARCHAR(20) UNIQUE
                         )
-                        """))
+                        """)
+                )
 
             try:
                 trans = conn.begin()

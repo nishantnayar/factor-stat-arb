@@ -25,7 +25,9 @@ from src.config.database import get_database_config  # noqa: E402
 # --- Safety constants: prevent accidental drop of production/dev data ---
 PRODUCTION_LIKE_DB_NAMES = ("trading_system",)  # Never drop tables in these
 TEST_DB_NAME_SUFFIX = "_test"  # Only allow table drops when DB name ends with this
-MAX_MARKET_DATA_ROWS_BEFORE_REFUSE_DROP = 1000  # Refuse to DROP if market_data has more rows
+MAX_MARKET_DATA_ROWS_BEFORE_REFUSE_DROP = (
+    1000  # Refuse to DROP if market_data has more rows
+)
 
 
 @pytest.fixture(scope="session")
@@ -222,6 +224,7 @@ def setup_test_tables(trading_engine):
 
     if not _is_safe_test_db(db_name):
         import warnings
+
         warnings.warn(
             f"setup_test_tables: Skipping DROP of market_data etc. (db={db_name}). "
             f"Use a test database whose name ends with '{TEST_DB_NAME_SUFFIX}' (e.g. trading_system_test).",
@@ -252,5 +255,7 @@ def setup_test_tables(trading_engine):
         conn.execute(text("DROP TABLE IF EXISTS data_ingestion.load_runs CASCADE"))
         conn.execute(text("DROP TABLE IF EXISTS data_ingestion.market_data CASCADE"))
         conn.execute(text("DROP TABLE IF EXISTS data_ingestion.symbols CASCADE"))
-        conn.execute(text("DROP TABLE IF EXISTS data_ingestion.analyst_recommendations CASCADE"))
+        conn.execute(
+            text("DROP TABLE IF EXISTS data_ingestion.analyst_recommendations CASCADE")
+        )
         conn.commit()

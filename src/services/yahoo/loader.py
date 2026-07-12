@@ -76,16 +76,16 @@ def safe_float_conversion(
 # Fiscal year end months for companies with non-standard fiscal years
 # Default is December (month 12) for most companies
 FISCAL_YEAR_END_MONTHS: Dict[str, int] = {
-    "AAPL": 9,   # September
-    "SBUX": 9,   # September
-    "DIS": 9,    # September
-    "FDX": 5,    # May
-    "NKE": 5,    # May
-    "WMT": 1,    # January
-    "TGT": 1,    # January
-    "HD": 1,     # January
-    "LOW": 1,    # January
-    "COST": 8,   # August
+    "AAPL": 9,  # September
+    "SBUX": 9,  # September
+    "DIS": 9,  # September
+    "FDX": 5,  # May
+    "NKE": 5,  # May
+    "WMT": 1,  # January
+    "TGT": 1,  # January
+    "HD": 1,  # January
+    "LOW": 1,  # January
+    "COST": 8,  # August
 }
 
 
@@ -119,10 +119,7 @@ class YahooDataLoader:
         return symbol.upper().strip()
 
     async def _update_symbol_status(
-        self,
-        symbol: str,
-        status: str,
-        error_message: Optional[str] = None
+        self, symbol: str, status: str, error_message: Optional[str] = None
     ) -> None:
         """Update symbol data ingestion status"""
         try:
@@ -439,35 +436,42 @@ class YahooDataLoader:
                         )
                         prev_result = session.execute(prev_stmt).scalar_one_or_none()
                         if prev_result is not None:
-                            percent_change_value = (
-                                float(holder.percent_held) - float(prev_result)
+                            percent_change_value = float(holder.percent_held) - float(
+                                prev_result
                             )
 
-                    records.append({
-                        "symbol": symbol,
-                        "date_reported": holder.date_reported,
-                        "holder_name": holder.holder_name,
-                        "shares": holder.shares,
-                        "value": holder.value,
-                        "percent_held": (
-                            float(holder.percent_held) if holder.percent_held else None
-                        ),
-                        "percent_change": (
-                            float(percent_change_value)
-                            if percent_change_value is not None
-                            else None
-                        ),
-                        "is_latest": True,
-                        "data_source": self.data_source,
-                    })
+                    records.append(
+                        {
+                            "symbol": symbol,
+                            "date_reported": holder.date_reported,
+                            "holder_name": holder.holder_name,
+                            "shares": holder.shares,
+                            "value": holder.value,
+                            "percent_held": (
+                                float(holder.percent_held)
+                                if holder.percent_held
+                                else None
+                            ),
+                            "percent_change": (
+                                float(percent_change_value)
+                                if percent_change_value is not None
+                                else None
+                            ),
+                            "is_latest": True,
+                            "data_source": self.data_source,
+                        }
+                    )
 
                 self._upsert_records(
                     model=InstitutionalHolder,
                     records=records,
                     index_elements=["symbol", "holder_name", "date_reported"],
                     update_fields=[
-                        "shares", "value", "percent_held",
-                        "percent_change", "is_latest"
+                        "shares",
+                        "value",
+                        "percent_held",
+                        "percent_change",
+                        "is_latest",
                     ],
                 )
 
@@ -492,9 +496,7 @@ class YahooDataLoader:
         date_range = (
             f" from {start_date} to {end_date}" if start_date and end_date else ""
         )
-        logger.info(
-            f"Loading dividends for {symbol} from Yahoo Finance{date_range}"
-        )
+        logger.info(f"Loading dividends for {symbol} from Yahoo Finance{date_range}")
 
         try:
             dividends_data = await self.client.get_dividends(
@@ -524,8 +526,11 @@ class YahooDataLoader:
                 records=records,
                 index_elements=["symbol", "ex_date", "data_source"],
                 update_fields=[
-                    "amount", "payment_date", "record_date",
-                    "dividend_type", "currency"
+                    "amount",
+                    "payment_date",
+                    "record_date",
+                    "dividend_type",
+                    "currency",
                 ],
             )
 
@@ -549,9 +554,7 @@ class YahooDataLoader:
         date_range = (
             f" from {start_date} to {end_date}" if start_date and end_date else ""
         )
-        logger.info(
-            f"Loading stock splits for {symbol} from Yahoo Finance{date_range}"
-        )
+        logger.info(f"Loading stock splits for {symbol} from Yahoo Finance{date_range}")
 
         try:
             splits_data = await self.client.get_splits(
@@ -619,9 +622,11 @@ class YahooDataLoader:
             # Store in database
             records = []
             for stmt_data in statements:
-                fiscal_year, fiscal_quarter = self._detect_fiscal_year_quarter(
-                    symbol, stmt_data.period_end
-                ) if stmt_data.period_end else (None, None)
+                fiscal_year, fiscal_quarter = (
+                    self._detect_fiscal_year_quarter(symbol, stmt_data.period_end)
+                    if stmt_data.period_end
+                    else (None, None)
+                )
 
                 stmt = FinancialStatement(
                     symbol=symbol,
@@ -634,39 +639,44 @@ class YahooDataLoader:
                 )
                 stmt.populate_common_metrics()
 
-                records.append({
-                    "symbol": stmt.symbol,
-                    "period_end": stmt.period_end,
-                    "statement_type": stmt.statement_type,
-                    "period_type": stmt.period_type,
-                    "fiscal_year": stmt.fiscal_year,
-                    "fiscal_quarter": stmt.fiscal_quarter,
-                    "data": stmt.data,
-                    "total_revenue": stmt.total_revenue,
-                    "net_income": stmt.net_income,
-                    "gross_profit": stmt.gross_profit,
-                    "operating_income": stmt.operating_income,
-                    "ebitda": stmt.ebitda,
-                    "total_assets": stmt.total_assets,
-                    "total_liabilities": stmt.total_liabilities,
-                    "total_equity": stmt.total_equity,
-                    "cash_and_equivalents": stmt.cash_and_equivalents,
-                    "total_debt": stmt.total_debt,
-                    "operating_cash_flow": stmt.operating_cash_flow,
-                    "free_cash_flow": stmt.free_cash_flow,
-                    "basic_eps": stmt.basic_eps,
-                    "diluted_eps": stmt.diluted_eps,
-                    "book_value_per_share": stmt.book_value_per_share,
-                    "data_source": "yahoo",
-                    "updated_at": stmt.updated_at,
-                })
+                records.append(
+                    {
+                        "symbol": stmt.symbol,
+                        "period_end": stmt.period_end,
+                        "statement_type": stmt.statement_type,
+                        "period_type": stmt.period_type,
+                        "fiscal_year": stmt.fiscal_year,
+                        "fiscal_quarter": stmt.fiscal_quarter,
+                        "data": stmt.data,
+                        "total_revenue": stmt.total_revenue,
+                        "net_income": stmt.net_income,
+                        "gross_profit": stmt.gross_profit,
+                        "operating_income": stmt.operating_income,
+                        "ebitda": stmt.ebitda,
+                        "total_assets": stmt.total_assets,
+                        "total_liabilities": stmt.total_liabilities,
+                        "total_equity": stmt.total_equity,
+                        "cash_and_equivalents": stmt.cash_and_equivalents,
+                        "total_debt": stmt.total_debt,
+                        "operating_cash_flow": stmt.operating_cash_flow,
+                        "free_cash_flow": stmt.free_cash_flow,
+                        "basic_eps": stmt.basic_eps,
+                        "diluted_eps": stmt.diluted_eps,
+                        "book_value_per_share": stmt.book_value_per_share,
+                        "data_source": "yahoo",
+                        "updated_at": stmt.updated_at,
+                    }
+                )
 
             if records:
                 self._upsert_records(
                     model=FinancialStatement,
                     records=records,
                     index_elements=[
-                        "symbol", "period_end", "statement_type", "period_type"
+                        "symbol",
+                        "period_end",
+                        "statement_type",
+                        "period_type",
                     ],
                 )
 
@@ -697,18 +707,22 @@ class YahooDataLoader:
                     logger.warning(f"Skipping officer for {symbol}: empty name")
                     continue
 
-                records.append({
-                    "symbol": symbol,
-                    "name": officer_data.name.strip(),
-                    "title": officer_data.title.strip() if officer_data.title else None,
-                    "age": officer_data.age,
-                    "year_born": officer_data.year_born,
-                    "fiscal_year": officer_data.fiscal_year,
-                    "total_pay": officer_data.total_pay,
-                    "exercised_value": officer_data.exercised_value,
-                    "unexercised_value": officer_data.unexercised_value,
-                    "data_source": self.data_source,
-                })
+                records.append(
+                    {
+                        "symbol": symbol,
+                        "name": officer_data.name.strip(),
+                        "title": officer_data.title.strip()
+                        if officer_data.title
+                        else None,
+                        "age": officer_data.age,
+                        "year_born": officer_data.year_born,
+                        "fiscal_year": officer_data.fiscal_year,
+                        "total_pay": officer_data.total_pay,
+                        "exercised_value": officer_data.exercised_value,
+                        "unexercised_value": officer_data.unexercised_value,
+                        "data_source": self.data_source,
+                    }
+                )
 
             if records:
                 self._upsert_records(
@@ -716,8 +730,12 @@ class YahooDataLoader:
                     records=records,
                     index_elements=["symbol", "name", "title"],
                     update_fields=[
-                        "age", "year_born", "fiscal_year", "total_pay",
-                        "exercised_value", "unexercised_value"
+                        "age",
+                        "year_born",
+                        "fiscal_year",
+                        "total_pay",
+                        "exercised_value",
+                        "unexercised_value",
                     ],
                 )
 
@@ -736,9 +754,7 @@ class YahooDataLoader:
     async def load_analyst_recommendations(self, symbol: str) -> int:
         """Load analyst recommendations for a symbol"""
         symbol = self._normalize_symbol(symbol)
-        logger.info(
-            f"Loading analyst recommendations for {symbol} from Yahoo Finance"
-        )
+        logger.info(f"Loading analyst recommendations for {symbol} from Yahoo Finance")
 
         try:
             recommendations_data = await self.client.get_analyst_recommendations(
@@ -827,9 +843,7 @@ class YahooDataLoader:
         except YahooAPIError:
             raise
         except Exception as e:
-            logger.error(
-                f"Failed to load ESG scores for {symbol}: {e}", exc_info=True
-            )
+            logger.error(f"Failed to load ESG scores for {symbol}: {e}", exc_info=True)
             raise YahooAPIError(f"Failed to load ESG scores for {symbol}: {str(e)}")
 
     async def load_all_data(
@@ -889,9 +903,9 @@ class YahooDataLoader:
                 results["key_statistics"] = 1 if success else 0
 
             if include_institutional_holders:
-                results["institutional_holders"] = (
-                    await self.load_institutional_holders(symbol)
-                )
+                results[
+                    "institutional_holders"
+                ] = await self.load_institutional_holders(symbol)
 
             if include_financial_statements:
                 statements = await self.load_financial_statements(symbol)
@@ -907,14 +921,12 @@ class YahooDataLoader:
                 )
 
             if include_splits:
-                results["splits"] = await self.load_splits(
-                    symbol, start_date, end_date
-                )
+                results["splits"] = await self.load_splits(symbol, start_date, end_date)
 
             if include_analyst_recommendations:
-                results["analyst_recommendations"] = (
-                    await self.load_analyst_recommendations(symbol)
-                )
+                results[
+                    "analyst_recommendations"
+                ] = await self.load_analyst_recommendations(symbol)
 
             if include_esg_scores:
                 success = await self.load_esg_scores(symbol)

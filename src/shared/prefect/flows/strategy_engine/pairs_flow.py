@@ -17,7 +17,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Awaitable, Optional, cast
+from typing import Awaitable, cast
 
 
 class _IgnoreWinError10054(logging.Filter):

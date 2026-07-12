@@ -68,8 +68,10 @@ async def deploy() -> None:
         description="Daily end-of-day market data ingestion from Yahoo Finance (hourly bars)",
         ignore_warnings=True,
     )
-    print(f"[ok]   deployed 'Daily Market Data Update' to pool '{POOL}' "
-          f"on cron '{CRON}' (id={dep_id})")
+    print(
+        f"[ok]   deployed 'Daily Market Data Update' to pool '{POOL}' "
+        f"on cron '{CRON}' (id={dep_id})"
+    )
 
 
 async def ensure_deployment() -> None:

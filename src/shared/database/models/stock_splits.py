@@ -100,4 +100,3 @@ class StockSplit(Base):
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }
-

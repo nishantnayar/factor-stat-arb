@@ -111,9 +111,7 @@ class TestCorrelationGuard:
         active = _make_pair(2, "C", "D")
         prices_cache = {"A": s1, "B": s2, "C": s3, "D": s4}
 
-        allowed, _ = self.mgr.check_correlation_guard(
-            candidate, prices_cache, [active]
-        )
+        allowed, _ = self.mgr.check_correlation_guard(candidate, prices_cache, [active])
         assert allowed is True
 
     def test_fail_open_when_insufficient_bars(self):
@@ -273,9 +271,9 @@ class TestUnrealizedPnl:
         t2 = self._make_trade("SHORT_SPREAD", 200.0, 100.0, 3, 6, sym1="C", sym2="D")
         prices = {
             "A": pd.Series([110.0]),  # +100 on long leg
-            "B": pd.Series([55.0]),   # -25 on short leg -> +75
+            "B": pd.Series([55.0]),  # -25 on short leg -> +75
             "C": pd.Series([195.0]),  # -3*(-5) = +15 on short side
-            "D": pd.Series([98.0]),   # +6*(-2) = -12 on long side -> +3
+            "D": pd.Series([98.0]),  # +6*(-2) = -12 on long side -> +3
         }
         pnl = PortfolioRiskManager.compute_unrealized_pnl([t1, t2], prices)
         assert abs(pnl - 78.0) < 1e-6

@@ -12,7 +12,6 @@ import pytest
 
 from src.services.strategy_engine.pairs.position_sizer import (
     BOOTSTRAP_FRACTION,
-    BOOTSTRAP_TRADES,
     MAX_LEG_FRACTION,
     KellySizer,
 )

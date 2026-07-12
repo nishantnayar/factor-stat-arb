@@ -71,7 +71,7 @@ async def example_3_all_symbols() -> None:
         max_symbols=5,  # Limit for demo
     )
 
-    print(f"\nLoading Statistics:")
+    print("\nLoading Statistics:")
     print(f"   Total symbols processed: {stats['total_symbols']}")
     print(f"   Successful: {stats['successful']}")
     print(f"   Failed: {stats['failed']}")
@@ -135,7 +135,7 @@ async def example_6_comprehensive_load() -> None:
         include_splits=True,
     )
 
-    print(f"\nLoading Results:")
+    print("\nLoading Results:")
     print(f"   Market data records: {results['market_data']}")
     print(f"   Company info: {results['company_info']}")
     print(f"   Dividends: {results['dividends']}")

@@ -22,7 +22,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Awaitable, List, Optional, cast
+from typing import Awaitable, List, cast
 
 
 class _IgnoreWinError10054(logging.Filter):
@@ -51,7 +51,6 @@ from prefect import flow, task
 from src.config.settings import get_settings
 from src.services.alpaca.client import AlpacaClient
 from src.services.strategy_engine.harmonic.gartley_detector import (
-    GartleyDetector,
     GartleyPattern,
     scan_universe,
 )
@@ -61,7 +60,6 @@ from src.services.strategy_engine.harmonic.harmonic_executor import (
 )
 from src.shared.database.base import db_readonly_session
 from src.shared.database.models.strategy_models import HarmonicTrade
-from src.shared.market_data import get_price_series
 
 # ---------------------------------------------------------------------------
 # Universe defaults (override with HARMONIC_UNIVERSE env var)
@@ -146,8 +144,6 @@ def load_prices_task(symbols: List[str]) -> dict:
     Symbols with fewer than 2*_SWING_ORDER+1 bars are dropped with a warning.
     """
     from sqlalchemy import text
-
-    from src.shared.market_data import get_price_series as _gps
 
     # Harmonic patterns work best on daily bars; reuse the yahoo_adjusted source.
     min_bars = 2 * _SWING_ORDER + 1

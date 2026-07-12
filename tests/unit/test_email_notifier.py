@@ -5,7 +5,7 @@ smtplib.SMTP and get_settings() are patched so no real network
 or SMTP credentials are needed.
 """
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 

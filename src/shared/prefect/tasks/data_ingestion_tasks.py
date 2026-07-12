@@ -5,12 +5,10 @@ Yahoo Finance data ingestion tasks.
 """
 
 from datetime import date, timedelta
-from typing import Optional
 
 from loguru import logger
 from prefect import task
 
-from src.services.data_ingestion.symbols import SymbolService
 from src.services.yahoo.exceptions import YahooDataError
 from src.services.yahoo.loader import YahooDataLoader
 

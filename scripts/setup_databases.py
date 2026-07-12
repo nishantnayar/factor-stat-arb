@@ -8,7 +8,6 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional
 
 import psycopg2
 from dotenv import load_dotenv

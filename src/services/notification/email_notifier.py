@@ -185,7 +185,7 @@ class EmailNotifier:
   <h2 style="margin-top:0;border-bottom:2px solid #111;padding-bottom:8px">{title}</h2>
   {content}
   <p style="color:#888;font-size:11px;margin-top:24px;border-top:1px solid #eee;padding-top:8px">
-    Trading System &nbsp;|&nbsp; {now} &nbsp;|&nbsp; {'Paper Trading' if self._paper else 'Live Trading'}
+    Trading System &nbsp;|&nbsp; {now} &nbsp;|&nbsp; {"Paper Trading" if self._paper else "Live Trading"}
   </p>
 </div>
 </body></html>"""

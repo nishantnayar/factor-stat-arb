@@ -232,7 +232,11 @@ class PortfolioRiskManager:
         for trade in open_trades:
             # open_trades are detached ORM instances in live flow runs.
             # Avoid lazy-loading trade.pair on detached objects.
-            pair = pair_lookup.get(trade.pair_id) if pair_lookup else getattr(trade, "pair", None)
+            pair = (
+                pair_lookup.get(trade.pair_id)
+                if pair_lookup
+                else getattr(trade, "pair", None)
+            )
             if pair is None:
                 logger.debug(
                     "compute_unrealized_pnl: missing pair metadata for pair_id=%s",

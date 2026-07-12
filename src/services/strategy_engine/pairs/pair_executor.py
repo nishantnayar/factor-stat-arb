@@ -22,7 +22,7 @@ from typing import Optional, Tuple
 from loguru import logger
 
 from src.services.alpaca.client import AlpacaClient
-from src.shared.database.base import db_readonly_session, db_transaction
+from src.shared.database.base import db_transaction
 from src.shared.database.models.strategy_models import (
     PairRegistry,
     PairSignal,

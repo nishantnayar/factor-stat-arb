@@ -10,7 +10,6 @@ Email: nishant.nayar@hotmail.com
 """
 
 from datetime import datetime
-from typing import Dict, List
 
 from src.shared.utils.timezone import (  # Core timezone functions; Trading utilities; Data processing; Display formatting; Logging
     ensure_utc_timestamp,
@@ -18,7 +17,6 @@ from src.shared.utils.timezone import (  # Core timezone functions; Trading util
     format_timestamp_for_logging,
     format_trading_time,
     get_market_status,
-    get_trading_day,
     is_market_hours,
     log_with_timezone,
     normalize_vendor_timestamp,
@@ -26,7 +24,6 @@ from src.shared.utils.timezone import (  # Core timezone functions; Trading util
     now_eastern,
     now_utc,
     to_central,
-    to_eastern,
     to_utc,
 )
 from src.web.api.timezone_helpers import (
@@ -148,7 +145,7 @@ def example_logging():
 
     # Simulate trade logging
     trade_timestamp = now_utc()
-    log_with_timezone(f"Trade executed: AAPL 100 shares at $150.25", "INFO")
+    log_with_timezone("Trade executed: AAPL 100 shares at $150.25", "INFO")
 
     # Format timestamp for logging
     formatted_timestamp = format_timestamp_for_logging(trade_timestamp)
@@ -228,7 +225,7 @@ def example_api_responses():
     print("Trade data with timezone information:")
     print(f"  Trade ID: {trade_data['trade_id']}")
     print(f"  Symbol: {trade_data['symbol']}")
-    print(f"  Executed at:")
+    print("  Executed at:")
     print(f"    Display (Central): {timestamp_response.timestamp}")
     print(f"    UTC: {timestamp_response.timestamp_utc}")
     print(f"    Trading (Eastern): {timestamp_response.timestamp_trading}")

@@ -56,7 +56,7 @@ async def demo_company_info(client: YahooClient, symbol: str = "AAPL") -> None:
     print(f"Market Cap: ${info.market_cap:,}" if info.market_cap else "Market Cap: N/A")
     print(f"Exchange: {info.exchange}")
     print(f"Currency: {info.currency}")
-    print(f"\nDescription (first 200 chars):")
+    print("\nDescription (first 200 chars):")
     if info.description:
         print(info.description[:200] + "...")
 
@@ -102,27 +102,27 @@ async def demo_key_statistics(client: YahooClient, symbol: str = "AAPL") -> None
 
     print("\n--- PROFITABILITY METRICS ---")
     print(
-        f"Profit Margin: {stats.profit_margin*100:.2f}%"
+        f"Profit Margin: {stats.profit_margin * 100:.2f}%"
         if stats.profit_margin
         else "Profit Margin: N/A"
     )
     print(
-        f"Operating Margin: {stats.operating_margin*100:.2f}%"
+        f"Operating Margin: {stats.operating_margin * 100:.2f}%"
         if stats.operating_margin
         else "Operating Margin: N/A"
     )
     print(
-        f"Return on Assets: {stats.return_on_assets*100:.2f}%"
+        f"Return on Assets: {stats.return_on_assets * 100:.2f}%"
         if stats.return_on_assets
         else "ROA: N/A"
     )
     print(
-        f"Return on Equity: {stats.return_on_equity*100:.2f}%"
+        f"Return on Equity: {stats.return_on_equity * 100:.2f}%"
         if stats.return_on_equity
         else "ROE: N/A"
     )
     print(
-        f"Gross Margin: {stats.gross_margin*100:.2f}%"
+        f"Gross Margin: {stats.gross_margin * 100:.2f}%"
         if stats.gross_margin
         else "Gross Margin: N/A"
     )
@@ -168,12 +168,12 @@ async def demo_key_statistics(client: YahooClient, symbol: str = "AAPL") -> None
 
     print("\n--- GROWTH METRICS ---")
     print(
-        f"Revenue Growth: {stats.revenue_growth*100:.2f}%"
+        f"Revenue Growth: {stats.revenue_growth * 100:.2f}%"
         if stats.revenue_growth
         else "Revenue Growth: N/A"
     )
     print(
-        f"Earnings Growth: {stats.earnings_growth*100:.2f}%"
+        f"Earnings Growth: {stats.earnings_growth * 100:.2f}%"
         if stats.earnings_growth
         else "Earnings Growth: N/A"
     )
@@ -208,7 +208,7 @@ async def demo_key_statistics(client: YahooClient, symbol: str = "AAPL") -> None
 
     print("\n--- DIVIDEND METRICS ---")
     print(
-        f"Dividend Yield: {stats.dividend_yield*100:.2f}%"
+        f"Dividend Yield: {stats.dividend_yield * 100:.2f}%"
         if stats.dividend_yield
         else "Div Yield: N/A"
     )
@@ -218,7 +218,7 @@ async def demo_key_statistics(client: YahooClient, symbol: str = "AAPL") -> None
         else "Div Rate: N/A"
     )
     print(
-        f"Payout Ratio: {stats.payout_ratio*100:.2f}%"
+        f"Payout Ratio: {stats.payout_ratio * 100:.2f}%"
         if stats.payout_ratio
         else "Payout Ratio: N/A"
     )
@@ -243,12 +243,12 @@ async def demo_key_statistics(client: YahooClient, symbol: str = "AAPL") -> None
         else "Short Ratio: N/A"
     )
     print(
-        f"Held by Insiders: {stats.held_percent_insiders*100:.2f}%"
+        f"Held by Insiders: {stats.held_percent_insiders * 100:.2f}%"
         if stats.held_percent_insiders
         else "Insiders: N/A"
     )
     print(
-        f"Held by Institutions: {stats.held_percent_institutions*100:.2f}%"
+        f"Held by Institutions: {stats.held_percent_institutions * 100:.2f}%"
         if stats.held_percent_institutions
         else "Institutions: N/A"
     )
@@ -310,7 +310,7 @@ async def demo_institutional_holders(client: YahooClient, symbol: str = "AAPL") 
             shares_str = f"{holder.shares:,}" if holder.shares else "N/A"
             value_str = f"${holder.value:,}" if holder.value else "N/A"
             pct_str = (
-                f"{holder.percent_held*100:.2f}%" if holder.percent_held else "N/A"
+                f"{holder.percent_held * 100:.2f}%" if holder.percent_held else "N/A"
             )
             print(
                 f"  {holder.holder_name[:40]:40s} | Shares: {shares_str:15s} | Value: {value_str:15s} | Held: {pct_str}"
@@ -336,27 +336,27 @@ async def demo_analyst_recommendations(
             total = rec.total_analysts
             print(f"\nPeriod: {rec.period}")
             print(
-                f"  Strong Buy: {rec.strong_buy:3d} ({rec.strong_buy/total*100:5.1f}%)"
+                f"  Strong Buy: {rec.strong_buy:3d} ({rec.strong_buy / total * 100:5.1f}%)"
                 if total > 0
                 else "  Strong Buy: N/A"
             )
             print(
-                f"  Buy:        {rec.buy:3d} ({rec.buy/total*100:5.1f}%)"
+                f"  Buy:        {rec.buy:3d} ({rec.buy / total * 100:5.1f}%)"
                 if total > 0
                 else "  Buy: N/A"
             )
             print(
-                f"  Hold:       {rec.hold:3d} ({rec.hold/total*100:5.1f}%)"
+                f"  Hold:       {rec.hold:3d} ({rec.hold / total * 100:5.1f}%)"
                 if total > 0
                 else "  Hold: N/A"
             )
             print(
-                f"  Sell:       {rec.sell:3d} ({rec.sell/total*100:5.1f}%)"
+                f"  Sell:       {rec.sell:3d} ({rec.sell / total * 100:5.1f}%)"
                 if total > 0
                 else "  Sell: N/A"
             )
             print(
-                f"  Strong Sell:{rec.strong_sell:3d} ({rec.strong_sell/total*100:5.1f}%)"
+                f"  Strong Sell:{rec.strong_sell:3d} ({rec.strong_sell / total * 100:5.1f}%)"
                 if total > 0
                 else "  Strong Sell: N/A"
             )
@@ -378,7 +378,7 @@ async def demo_financial_statements(client: YahooClient, symbol: str = "AAPL") -
         latest = income_stmts[0]
         print(f"\nPeriod End: {latest.period_end}")
         print(f"Statement Type: {latest.statement_type}")
-        print(f"\nKey metrics (sample):")
+        print("\nKey metrics (sample):")
         data = latest.data
         for key in ["Total Revenue", "Gross Profit", "Operating Income", "Net Income"]:
             if key in data and data[key] is not None:
@@ -393,7 +393,7 @@ async def demo_financial_statements(client: YahooClient, symbol: str = "AAPL") -
     if balance_stmts:
         latest = balance_stmts[0]
         print(f"\nPeriod End: {latest.period_end}")
-        print(f"\nKey metrics (sample):")
+        print("\nKey metrics (sample):")
         data = latest.data
         for key in [
             "Total Assets",
@@ -412,7 +412,7 @@ async def demo_financial_statements(client: YahooClient, symbol: str = "AAPL") -
     if cashflow_stmts:
         latest = cashflow_stmts[0]
         print(f"\nPeriod End: {latest.period_end}")
-        print(f"\nKey metrics (sample):")
+        print("\nKey metrics (sample):")
         data = latest.data
         for key in [
             "Operating Cash Flow",

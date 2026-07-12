@@ -93,17 +93,17 @@ class DatabaseConfig(BaseSettings):
             SQLAlchemy Engine instance (cached and reused)
         """
         cache_key = (database, schema)
-        
+
         # Check cache first (fast path without lock)
         if cache_key in _engine_cache:
             return _engine_cache[cache_key]
-        
+
         # Create engine with lock to prevent race conditions
         with _cache_lock:
             # Double-check after acquiring lock
             if cache_key in _engine_cache:
                 return _engine_cache[cache_key]
-            
+
             if database == "trading":
                 url = self.trading_db_url
             elif database == "prefect":
@@ -126,7 +126,7 @@ class DatabaseConfig(BaseSettings):
                 pool_recycle=self.pool_recycle,
                 echo=False,  # Set to True for SQL debugging
             )
-            
+
             # Cache the engine
             _engine_cache[cache_key] = engine
             return engine

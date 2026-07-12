@@ -47,8 +47,10 @@ PG_RESTORE = PG_BIN / "pg_restore.exe"
 
 def _conn(dbname: str):
     c = psycopg2.connect(
-        host=settings.postgres_host, port=settings.postgres_port,
-        user=settings.postgres_user, password=settings.postgres_password,
+        host=settings.postgres_host,
+        port=settings.postgres_port,
+        user=settings.postgres_user,
+        password=settings.postgres_password,
         dbname=dbname,
     )
     c.autocommit = True
@@ -62,8 +64,14 @@ def _pg_env() -> dict:
 
 
 def _conn_args() -> list[str]:
-    return ["-h", settings.postgres_host, "-p", str(settings.postgres_port),
-            "-U", settings.postgres_user]
+    return [
+        "-h",
+        settings.postgres_host,
+        "-p",
+        str(settings.postgres_port),
+        "-U",
+        settings.postgres_user,
+    ]
 
 
 def _counts(dbname: str) -> dict[str, int]:
@@ -105,17 +113,31 @@ def seed() -> None:
         for t in TABLES:
             table_flags += ["-t", t]
         dump_cmd = [
-            str(PG_DUMP), *_conn_args(), "--data-only", "-Fc",
-            *table_flags, "-d", SOURCE_DB, "-f", str(dump),
+            str(PG_DUMP),
+            *_conn_args(),
+            "--data-only",
+            "-Fc",
+            *table_flags,
+            "-d",
+            SOURCE_DB,
+            "-f",
+            str(dump),
         ]
-        print(f"[..]   pg_dump --data-only ({len(TABLES)} tables) from {SOURCE_DB} - "
-              f"this may take a minute for market_data")
+        print(
+            f"[..]   pg_dump --data-only ({len(TABLES)} tables) from {SOURCE_DB} - "
+            f"this may take a minute for market_data"
+        )
         subprocess.run(dump_cmd, env=_pg_env(), check=True)
-        print(f"[ok]   dump written ({dump.stat().st_size/1e6:.1f} MB compressed)")
+        print(f"[ok]   dump written ({dump.stat().st_size / 1e6:.1f} MB compressed)")
 
         restore_cmd = [
-            str(PG_RESTORE), *_conn_args(), "--data-only", "--disable-triggers",
-            "-d", TARGET_DB, str(dump),
+            str(PG_RESTORE),
+            *_conn_args(),
+            "--data-only",
+            "--disable-triggers",
+            "-d",
+            TARGET_DB,
+            str(dump),
         ]
         print(f"[..]   pg_restore into {TARGET_DB}")
         r = subprocess.run(restore_cmd, env=_pg_env())
@@ -142,7 +164,9 @@ def main() -> int:
         print("Target already has data:")
         for t, n in populated.items():
             print(f"  {t}: {n:,} rows")
-        print("Refusing to append (would duplicate). Re-run with --force to TRUNCATE + reseed.")
+        print(
+            "Refusing to append (would duplicate). Re-run with --force to TRUNCATE + reseed."
+        )
         return 1
     if populated:
         _truncate_target()

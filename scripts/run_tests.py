@@ -4,11 +4,10 @@ Test Runner Script for Trading System
 Provides different test execution modes and reporting
 """
 
-import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 # Add src to path for imports
 sys.path.append(str(Path(__file__).parent.parent / "src"))
@@ -16,13 +15,13 @@ sys.path.append(str(Path(__file__).parent.parent / "src"))
 
 def run_command(cmd: List[str], description: str) -> bool:
     """Run a command and return success status"""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Running: {description}")
     print(f"Command: {' '.join(cmd)}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     try:
-        result = subprocess.run(cmd, check=True, capture_output=False)
+        subprocess.run(cmd, check=True, capture_output=False)
         print(f"SUCCESS: {description} completed successfully")
         return True
     except subprocess.CalledProcessError as e:
@@ -207,10 +206,10 @@ def main():
         success = run_specific_test(command)
 
     if success:
-        print(f"\nSUCCESS: Test execution completed successfully!")
+        print("\nSUCCESS: Test execution completed successfully!")
         return 0
     else:
-        print(f"\nERROR: Test execution failed!")
+        print("\nERROR: Test execution failed!")
         return 1
 
 

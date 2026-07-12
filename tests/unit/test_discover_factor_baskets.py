@@ -77,7 +77,9 @@ class TestBuildCandidate:
         assert cand["name"] == "FSA_TEST"
         assert 48 <= cand["half_life_hours"] <= 400
         assert cand["hedge_weights"]["TEST"] == 1.0
-        assert cand["max_hold_hours"] == pytest.approx(cand["half_life_hours"] * 3, abs=0.1)
+        assert cand["max_hold_hours"] == pytest.approx(
+            cand["half_life_hours"] * 3, abs=0.1
+        )
 
     def test_rejects_low_proxy_r2(self):
         # stock uncorrelated with proxy -> proxy_r2 ~ 0

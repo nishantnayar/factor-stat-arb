@@ -30,7 +30,7 @@ sys.path.insert(0, str(project_root))
 
 from datetime import timezone
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from src.shared.database.base import db_readonly_session, db_transaction
@@ -578,7 +578,7 @@ async def run_discovery(
             f"(spread = log({row['symbol1']}) - {row['hedge_ratio']:.4f} x log({row['symbol2']}))"
         )
         print(
-            f"       Half-life:    {row['half_life_hours']:.1f} hours  (~{row['half_life_hours']/7:.1f} trading days)"
+            f"       Half-life:    {row['half_life_hours']:.1f} hours  (~{row['half_life_hours'] / 7:.1f} trading days)"
         )
         print(
             f"       Z-window:     {row['z_score_window']} bars  (2 x half-life, max 60)"

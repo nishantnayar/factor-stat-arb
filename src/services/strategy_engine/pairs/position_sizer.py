@@ -34,10 +34,10 @@ from src.shared.database.models.strategy_models import PairRegistry, PairTrade
 BOOTSTRAP_TRADES = 20
 
 # Fixed fraction during bootstrap
-BOOTSTRAP_FRACTION = 0.02   # 2% per leg
+BOOTSTRAP_FRACTION = 0.02  # 2% per leg
 
 # Hard cap per leg
-MAX_LEG_FRACTION = 0.12     # 12% per leg
+MAX_LEG_FRACTION = 0.12  # 12% per leg
 
 
 class KellySizer:
@@ -107,7 +107,7 @@ class KellySizer:
         if total < BOOTSTRAP_TRADES:
             logger.debug(
                 f"Bootstrap mode: {total}/{BOOTSTRAP_TRADES} trades - "
-                f"using fixed {BOOTSTRAP_FRACTION*100:.0f}%"
+                f"using fixed {BOOTSTRAP_FRACTION * 100:.0f}%"
             )
             return BOOTSTRAP_FRACTION
 

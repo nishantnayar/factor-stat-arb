@@ -50,14 +50,22 @@ def run_backup(output_dir: Path | None = None) -> Path:
 
     cmd = [
         PG_DUMP_PATH,
-        "-h", host,
-        "-p", port,
-        "-U", user,
-        "-d", db,
-        "-n", "data_ingestion",
-        "-n", "analytics",
-        "-F", "c",
-        "-f", str(output_file),
+        "-h",
+        host,
+        "-p",
+        port,
+        "-U",
+        user,
+        "-d",
+        db,
+        "-n",
+        "data_ingestion",
+        "-n",
+        "analytics",
+        "-F",
+        "c",
+        "-f",
+        str(output_file),
     ]
 
     result = subprocess.run(cmd, env=env, capture_output=True, text=True)

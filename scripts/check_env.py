@@ -32,7 +32,9 @@ PACKAGES = {
 def check_python_version() -> bool:
     ok = sys.version_info[:2] == REQUIRED_PYTHON
     status = "OK" if ok else "FAIL"
-    print(f"[{status}] Python {sys.version.split()[0]} (expected {REQUIRED_PYTHON[0]}.{REQUIRED_PYTHON[1]}.x)")
+    print(
+        f"[{status}] Python {sys.version.split()[0]} (expected {REQUIRED_PYTHON[0]}.{REQUIRED_PYTHON[1]}.x)"
+    )
     return ok
 
 
@@ -43,7 +45,9 @@ def check_venv() -> bool:
     status = "OK" if in_expected_venv else "FAIL"
     print(f"[{status}] Interpreter: {sys.executable}")
     if not in_expected_venv:
-        print(f"       Expected to run inside {expected_venv} - use `uv run` or activate .venv")
+        print(
+            f"       Expected to run inside {expected_venv} - use `uv run` or activate .venv"
+        )
     return in_expected_venv
 
 

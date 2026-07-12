@@ -5,7 +5,7 @@ Provides SQLAlchemy declarative base and session management
 
 from contextlib import contextmanager
 from threading import Lock
-from typing import Any, Callable, Dict, Generator, Optional, TypeVar
+from typing import Any, Callable, Dict, Generator, TypeVar
 
 from loguru import logger
 from sqlalchemy import Engine
@@ -28,23 +28,23 @@ def _get_sessionmaker(engine: Engine) -> sessionmaker:
     """
     Get or create a sessionmaker for the given engine.
     Sessionmakers are cached to prevent creating multiple instances.
-    
+
     Args:
         engine: SQLAlchemy engine
-        
+
     Returns:
         Cached sessionmaker instance
     """
     # Check cache first (fast path without lock)
     if engine in _sessionmaker_cache:
         return _sessionmaker_cache[engine]
-    
+
     # Create sessionmaker with lock to prevent race conditions
     with _sessionmaker_lock:
         # Double-check after acquiring lock
         if engine in _sessionmaker_cache:
             return _sessionmaker_cache[engine]
-        
+
         SessionLocal = sessionmaker(bind=engine)
         _sessionmaker_cache[engine] = SessionLocal
         return SessionLocal

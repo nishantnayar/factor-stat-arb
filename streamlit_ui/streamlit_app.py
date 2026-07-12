@@ -73,7 +73,9 @@ def render_placeholder(name: str, milestone: str) -> None:
 
 def main() -> None:
     st.title("Factor Statistical Arbitrage")
-    st.caption("Explainable factor-residual statistical arbitrage - paper trading only.")
+    st.caption(
+        "Explainable factor-residual statistical arbitrage - paper trading only."
+    )
 
     tab_overview, tab_factors, tab_signals, tab_backtest = st.tabs(
         ["Overview", "Factor Structure", "Signals", "Backtest"]

@@ -325,7 +325,9 @@ async def _load_single_symbol(
         if single_type == "institutional_holders":
             count = await single_loader(symbol)
             if count > 0:
-                logger.info(f"Successfully loaded {count} institutional holders for {symbol}")
+                logger.info(
+                    f"Successfully loaded {count} institutional holders for {symbol}"
+                )
                 return 0
             else:
                 logger.warning(f"No institutional holders found for {symbol}")
@@ -333,7 +335,9 @@ async def _load_single_symbol(
         elif single_type == "financial_statements":
             statements = await single_loader(symbol)
             if statements:
-                logger.info(f"Successfully loaded {len(statements)} financial statements for {symbol}")
+                logger.info(
+                    f"Successfully loaded {len(statements)} financial statements for {symbol}"
+                )
                 return 0
             else:
                 logger.warning(f"No financial statements found for {symbol}")
@@ -341,7 +345,9 @@ async def _load_single_symbol(
         elif single_type == "company_officers":
             officers = await single_loader(symbol)
             if officers:
-                logger.info(f"Successfully loaded {len(officers)} company officers for {symbol}")
+                logger.info(
+                    f"Successfully loaded {len(officers)} company officers for {symbol}"
+                )
                 return 0
             else:
                 logger.warning(f"No company officers found for {symbol}")
@@ -349,7 +355,9 @@ async def _load_single_symbol(
         elif single_type == "analyst_recommendations":
             count = await single_loader(symbol)
             if count > 0:
-                logger.info(f"Successfully loaded {count} analyst recommendation records for {symbol}")
+                logger.info(
+                    f"Successfully loaded {count} analyst recommendation records for {symbol}"
+                )
                 return 0
             else:
                 logger.warning(f"No analyst recommendations found for {symbol}")
@@ -362,16 +370,30 @@ async def _load_single_symbol(
                 # Only log if loader didn't already log (for cases where loader is silent)
                 # For company_info, the loader already logs, so we skip to avoid duplicates
                 if single_type != "company_info":
-                    logger.info(f"Successfully loaded {single_type.replace('_', ' ')} for {symbol}")
+                    logger.info(
+                        f"Successfully loaded {single_type.replace('_', ' ')} for {symbol}"
+                    )
                 return 0
             else:
-                logger.error(f"Failed to load {single_type.replace('_', ' ')} for {symbol}")
+                logger.error(
+                    f"Failed to load {single_type.replace('_', ' ')} for {symbol}"
+                )
                 return 1
 
     # Load multiple data types or market data
     if data_flags["market_data"] or any(
-        data_flags[k] for k in ["company_info", "key_statistics", "institutional_holders", 
-                                "financial_statements", "company_officers", "dividends", "splits", "analyst_recommendations", "esg_scores"]
+        data_flags[k]
+        for k in [
+            "company_info",
+            "key_statistics",
+            "institutional_holders",
+            "financial_statements",
+            "company_officers",
+            "dividends",
+            "splits",
+            "analyst_recommendations",
+            "esg_scores",
+        ]
     ):
         # Use load_all_data for comprehensive loading
         results = await loader.load_all_data(
@@ -421,9 +443,20 @@ async def _load_all_symbols(
     ]
 
     # Special handling for dividends and splits (they need date parameters)
-    if data_flags["dividends"] and not data_flags["market_data"] and not any(
-        data_flags[k] for k in ["company_info", "key_statistics", "institutional_holders", 
-                                "financial_statements", "company_officers", "splits"]
+    if (
+        data_flags["dividends"]
+        and not data_flags["market_data"]
+        and not any(
+            data_flags[k]
+            for k in [
+                "company_info",
+                "key_statistics",
+                "institutional_holders",
+                "financial_statements",
+                "company_officers",
+                "splits",
+            ]
+        )
     ):
         # Load dividends only for all symbols
         logger.info(f"Loading dividends for {len(symbols_list)} symbols")
@@ -452,7 +485,7 @@ async def _load_all_symbols(
             if i < len(symbols_list):
                 await asyncio.sleep(loader.delay_between_requests)
 
-        logger.info(f"Dividends loading completed:")
+        logger.info("Dividends loading completed:")
         logger.info(f"  Total symbols: {len(symbols_list)}")
         logger.info(f"  Successful (with data): {successful}")
         logger.info(f"  No data available: {no_data}")
@@ -461,9 +494,20 @@ async def _load_all_symbols(
 
         return 0 if failed == 0 else 1
 
-    if data_flags["splits"] and not data_flags["market_data"] and not any(
-        data_flags[k] for k in ["company_info", "key_statistics", "institutional_holders", 
-                                "financial_statements", "company_officers", "dividends"]
+    if (
+        data_flags["splits"]
+        and not data_flags["market_data"]
+        and not any(
+            data_flags[k]
+            for k in [
+                "company_info",
+                "key_statistics",
+                "institutional_holders",
+                "financial_statements",
+                "company_officers",
+                "dividends",
+            ]
+        )
     ):
         # Load splits only for all symbols
         logger.info(f"Loading stock splits for {len(symbols_list)} symbols")
@@ -492,7 +536,7 @@ async def _load_all_symbols(
             if i < len(symbols_list):
                 await asyncio.sleep(loader.delay_between_requests)
 
-        logger.info(f"Stock splits loading completed:")
+        logger.info("Stock splits loading completed:")
         logger.info(f"  Total symbols: {len(symbols_list)}")
         logger.info(f"  Successful (with data): {successful}")
         logger.info(f"  No data available: {no_data}")
@@ -515,7 +559,9 @@ async def _load_all_symbols(
 
     if single_type and single_loader:
         # Load single data type for all symbols
-        logger.info(f"Loading {single_type.replace('_', ' ')} for {len(symbols_list)} symbols")
+        logger.info(
+            f"Loading {single_type.replace('_', ' ')} for {len(symbols_list)} symbols"
+        )
         successful = 0
         no_data = 0
         failed = 0
@@ -560,7 +606,9 @@ async def _load_all_symbols(
                     else:
                         no_data += 1
             except Exception as e:
-                logger.error(f"Failed to load {single_type.replace('_', ' ')} for {sym}: {e}")
+                logger.error(
+                    f"Failed to load {single_type.replace('_', ' ')} for {sym}: {e}"
+                )
                 failed += 1
 
             if i < len(symbols_list):

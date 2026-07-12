@@ -1,0 +1,13 @@
+[lint.per-file-ignores]
+# sys.path / warnings-filter setup intentionally precedes these imports.
+"examples/yahoo_officers_loader_usage.py" = ["E402"]
+"scripts/discover_baskets.py" = ["E402"]
+"scripts/discover_pairs.py" = ["E402"]
+"scripts/load_yahoo_data.py" = ["E402"]
+"scripts/populate_technical_indicators.py" = ["E402"]
+"scripts/setup_databases.py" = ["E402"]
+"scripts/test_database_connections.py" = ["E402"]
+"src/services/yahoo/client.py" = ["E402"]
+"src/shared/prefect/flows/strategy_engine/harmonic_flow.py" = ["E402"]
+"src/shared/prefect/flows/strategy_engine/pairs_flow.py" = ["E402"]
+"tests/unit/test_indicator_calculator.py" = ["E402"]

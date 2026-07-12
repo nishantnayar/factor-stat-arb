@@ -31,8 +31,14 @@ settings = get_settings()
 SOURCE_DB = "trading_system"
 TARGET_DB = settings.trading_db_name  # factor_stat_arb
 SCHEMAS = [
-    "data_ingestion", "strategy_engine", "execution", "risk_management",
-    "analytics", "notification", "logging", "shared",
+    "data_ingestion",
+    "strategy_engine",
+    "execution",
+    "risk_management",
+    "analytics",
+    "notification",
+    "logging",
+    "shared",
 ]
 
 PG_BIN = Path(os.getenv("PG_BIN", r"C:\Program Files\PostgreSQL\18\bin"))
@@ -42,8 +48,10 @@ PG_RESTORE = PG_BIN / "pg_restore.exe"
 
 def _conn(dbname: str):
     c = psycopg2.connect(
-        host=settings.postgres_host, port=settings.postgres_port,
-        user=settings.postgres_user, password=settings.postgres_password,
+        host=settings.postgres_host,
+        port=settings.postgres_port,
+        user=settings.postgres_user,
+        password=settings.postgres_password,
         dbname=dbname,
     )
     c.autocommit = True
@@ -58,9 +66,12 @@ def _pg_env() -> dict:
 
 def _common_conn_args() -> list[str]:
     return [
-        "-h", settings.postgres_host,
-        "-p", str(settings.postgres_port),
-        "-U", settings.postgres_user,
+        "-h",
+        settings.postgres_host,
+        "-p",
+        str(settings.postgres_port),
+        "-U",
+        settings.postgres_user,
     ]
 
 
@@ -71,9 +82,12 @@ def recreate_target() -> None:
             # Terminate any open connections to the target before dropping.
             cur.execute(
                 "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
-                "WHERE datname = %s AND pid <> pg_backend_pid()", (TARGET_DB,)
+                "WHERE datname = %s AND pid <> pg_backend_pid()",
+                (TARGET_DB,),
             )
-            cur.execute(sql.SQL("DROP DATABASE IF EXISTS {}").format(sql.Identifier(TARGET_DB)))
+            cur.execute(
+                sql.SQL("DROP DATABASE IF EXISTS {}").format(sql.Identifier(TARGET_DB))
+            )
             cur.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(TARGET_DB)))
             print(f"[ok]   recreated empty database {TARGET_DB}")
     finally:
@@ -84,17 +98,28 @@ def clone_schema() -> None:
     with tempfile.TemporaryDirectory() as td:
         dump = Path(td) / "schema.dump"
         dump_cmd = [
-            str(PG_DUMP), *_common_conn_args(),
-            "--schema-only", "--no-owner", "--no-privileges",
-            "-Fc", "-d", SOURCE_DB, "-f", str(dump),
+            str(PG_DUMP),
+            *_common_conn_args(),
+            "--schema-only",
+            "--no-owner",
+            "--no-privileges",
+            "-Fc",
+            "-d",
+            SOURCE_DB,
+            "-f",
+            str(dump),
         ]
         print(f"[..]   pg_dump --schema-only from {SOURCE_DB}")
         subprocess.run(dump_cmd, env=_pg_env(), check=True)
 
         restore_cmd = [
-            str(PG_RESTORE), *_common_conn_args(),
-            "--no-owner", "--no-privileges",
-            "-d", TARGET_DB, str(dump),
+            str(PG_RESTORE),
+            *_common_conn_args(),
+            "--no-owner",
+            "--no-privileges",
+            "-d",
+            TARGET_DB,
+            str(dump),
         ]
         print(f"[..]   pg_restore into {TARGET_DB}")
         # pg_restore may emit non-fatal warnings; check=False, inspect returncode.

@@ -70,7 +70,6 @@ async def run_pair_discovery_task(
     Returns:
         List of (pair_id, symbol1, symbol2) for upserted pairs.
     """
-    import asyncio
 
     # Import the discovery logic from the scripts module.
     # run_discovery handles all DB I/O, filtering, and upsert.

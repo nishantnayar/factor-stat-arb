@@ -34,7 +34,9 @@ from src.shared.logging import setup_logging  # noqa: E402
 
 @click.command()
 @click.option("--symbol", type=str, help="Single symbol (e.g. AAPL).")
-@click.option("--all-symbols", is_flag=True, help="Backpopulate for all active symbols.")
+@click.option(
+    "--all-symbols", is_flag=True, help="Backpopulate for all active symbols."
+)
 @click.option(
     "--from-date",
     type=click.DateTime(formats=["%Y-%m-%d"]),

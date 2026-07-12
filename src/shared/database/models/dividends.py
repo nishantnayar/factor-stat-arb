@@ -99,7 +99,9 @@ class Dividend(Base):
             "ex_date": self.ex_date.isoformat(),
             "amount": float(self.amount),
             "amount_display": self.amount_display,
-            "payment_date": self.payment_date.isoformat() if self.payment_date else None,
+            "payment_date": self.payment_date.isoformat()
+            if self.payment_date
+            else None,
             "record_date": self.record_date.isoformat() if self.record_date else None,
             "dividend_type": self.dividend_type,
             "currency": self.currency,
@@ -107,4 +109,3 @@ class Dividend(Base):
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }
-

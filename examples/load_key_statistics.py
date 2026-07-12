@@ -5,7 +5,6 @@ Simple script to load comprehensive financial metrics into the database.
 """
 
 import asyncio
-from datetime import date
 
 from loguru import logger
 

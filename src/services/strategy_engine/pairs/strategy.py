@@ -19,7 +19,6 @@ The strategy reads prices from data_ingestion.market_data (yahoo_adjusted
 hourly bars).  Alpaca is used only for order execution and account info.
 """
 
-import asyncio
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 

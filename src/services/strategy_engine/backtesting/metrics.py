@@ -22,18 +22,18 @@ Gate thresholds (defaults match plan):
 
 from dataclasses import dataclass
 from datetime import date
-from typing import List, Optional
+from typing import List
 
 import numpy as np
 
 from src.services.strategy_engine.backtesting.engine import (
     BacktestResult,
-    SimulatedTrade,
 )
 
 # ---------------------------------------------------------------------------
 # Result dataclass
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class BacktestMetrics:
@@ -42,6 +42,7 @@ class BacktestMetrics:
 
     All percentage values are expressed as floats (e.g. 12.5 means 12.5%).
     """
+
     # Returns
     total_return_pct: float
     annualized_return_pct: float
@@ -96,6 +97,7 @@ class BacktestMetrics:
 # Calculator
 # ---------------------------------------------------------------------------
 
+
 class MetricsCalculator:
     """
     Computes BacktestMetrics from a BacktestResult.
@@ -106,8 +108,8 @@ class MetricsCalculator:
     """
 
     GATE_SHARPE = 0.5
-    GATE_WIN_RATE = 45.0     # %
-    GATE_DRAWDOWN = 15.0     # %
+    GATE_WIN_RATE = 45.0  # %
+    GATE_DRAWDOWN = 15.0  # %
 
     def compute(self, result: BacktestResult) -> BacktestMetrics:
         """
@@ -124,13 +126,17 @@ class MetricsCalculator:
         initial = result.initial_capital
 
         final_equity = equity_curve[-1]["equity"] if equity_curve else initial
-        total_return_pct = ((final_equity - initial) / initial) * 100 if initial > 0 else 0.0
+        total_return_pct = (
+            ((final_equity - initial) / initial) * 100 if initial > 0 else 0.0
+        )
 
         # Annualized return: (1 + r)^(252/trading_days) - 1
         trading_days = _count_trading_days(result.start_date, result.end_date)
         if trading_days > 0 and total_return_pct > -100:
             ann_factor = 252.0 / trading_days
-            annualized_return_pct = ((1 + total_return_pct / 100) ** ann_factor - 1) * 100
+            annualized_return_pct = (
+                (1 + total_return_pct / 100) ** ann_factor - 1
+            ) * 100
         else:
             annualized_return_pct = 0.0
 
@@ -143,19 +149,25 @@ class MetricsCalculator:
         losses = [t for t in trades if (t.pnl or 0) <= 0]
         winning_trades = len(wins)
         losing_trades = len(losses)
-        win_rate_pct = (winning_trades / total_trades * 100) if total_trades > 0 else 0.0
+        win_rate_pct = (
+            (winning_trades / total_trades * 100) if total_trades > 0 else 0.0
+        )
 
         avg_win_pct = (
             float(np.mean([t.pnl_pct for t in wins if t.pnl_pct is not None]))
-            if wins else 0.0
+            if wins
+            else 0.0
         )
         avg_loss_pct = (
             float(np.mean([abs(t.pnl_pct) for t in losses if t.pnl_pct is not None]))
-            if losses else 0.0
+            if losses
+            else 0.0
         )
 
         gross_profit = sum(t.pnl for t in wins if t.pnl is not None) if wins else 0.0
-        gross_loss = abs(sum(t.pnl for t in losses if t.pnl is not None)) if losses else 0.0
+        gross_loss = (
+            abs(sum(t.pnl for t in losses if t.pnl is not None)) if losses else 0.0
+        )
         profit_factor = (gross_profit / gross_loss) if gross_loss > 0 else float("inf")
 
         hold_times = [t.hold_hours for t in trades if t.hold_hours is not None]
@@ -195,6 +207,7 @@ class MetricsCalculator:
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
 
 def _sharpe_ratio(equity_curve: List[dict]) -> float:
     """
@@ -247,15 +260,12 @@ def _kelly_fraction(win_rate: float, avg_win_pct: float, avg_loss_pct: float) ->
 
 def _count_trading_days(start_date: date, end_date: date) -> int:
     """Approximate trading days (weekdays only) in date range."""
-    from datetime import timedelta
+
     delta = (end_date - start_date).days + 1
     total_weeks = delta // 7
     remaining = delta % 7
     # Count weekdays in remaining days
-    from datetime import date as date_type
+
     start_weekday = start_date.weekday() if hasattr(start_date, "weekday") else 0
-    extra = sum(
-        1 for i in range(remaining)
-        if (start_weekday + i) % 7 < 5
-    )
+    extra = sum(1 for i in range(remaining) if (start_weekday + i) % 7 < 5)
     return int(total_weeks * 5 + extra)

@@ -39,7 +39,7 @@ def normalize_api_url(url: str) -> str:
 
 def build_env() -> dict:
     s = get_settings()
-    api_url = normalize_api_url(s.prefect_api_url)   # http://localhost:4201/api
+    api_url = normalize_api_url(s.prefect_api_url)  # http://localhost:4201/api
     parsed = urlparse(api_url)
     port = str(parsed.port or 4201)
     host = parsed.hostname or "127.0.0.1"
@@ -76,7 +76,7 @@ def ensure_profile() -> None:
     api_url = normalize_api_url(get_settings().prefect_api_url)
     (home / "profiles.toml").write_text(
         'active = "factor-stat-arb"\n\n'
-        '[profiles.factor-stat-arb]\n'
+        "[profiles.factor-stat-arb]\n"
         f'PREFECT_API_URL = "{api_url}"\n',
         encoding="utf-8",
     )

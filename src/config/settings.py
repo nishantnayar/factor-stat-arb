@@ -3,7 +3,7 @@ Application Settings Configuration
 """
 
 import os
-from typing import Optional
+from typing import Any, Optional
 from urllib.parse import quote_plus
 
 from pydantic import Field
@@ -139,7 +139,11 @@ class Settings(BaseSettings):
         and prefect_db_name so the password is never duplicated.
         """
         override = self.prefect_db_url_override
-        if override and "your_password_here" not in override and ":password@" not in override:
+        if (
+            override
+            and "your_password_here" not in override
+            and ":password@" not in override
+        ):
             return override
         pw = quote_plus(self.postgres_password)
         return (
@@ -147,9 +151,15 @@ class Settings(BaseSettings):
             f"@{self.postgres_host}:{self.postgres_port}/{self.prefect_db_name}"
         )
 
+    def __init__(self, **kwargs: Any) -> None:
+        # Re-check DISABLE_ENV_FILE at instantiation time (not class-definition
+        # time) so tests can toggle it via patch.dict after this module loads.
+        if "_env_file" not in kwargs and os.getenv("DISABLE_ENV_FILE") == "true":
+            kwargs["_env_file"] = None
+        super().__init__(**kwargs)
+
     class Config:
-        # Allow disabling .env file reading via environment variable (useful for tests)
-        env_file = None if os.getenv("DISABLE_ENV_FILE") == "true" else ".env"
+        env_file = ".env"
         case_sensitive = False
         extra = "ignore"  # Ignore extra fields from environment
 

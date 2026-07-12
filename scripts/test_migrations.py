@@ -27,8 +27,14 @@ settings = get_settings()
 
 SCRATCH_DB = "factor_stat_arb_migtest"
 SCHEMAS = [
-    "data_ingestion", "strategy_engine", "execution", "risk_management",
-    "analytics", "notification", "logging", "shared",
+    "data_ingestion",
+    "strategy_engine",
+    "execution",
+    "risk_management",
+    "analytics",
+    "notification",
+    "logging",
+    "shared",
 ]
 # 01 creates databases (psql-specific); 26/27 are the dropped harmonic module.
 SKIP = {"01", "26", "27"}
@@ -36,8 +42,10 @@ SKIP = {"01", "26", "27"}
 
 def _conn(dbname: str):
     c = psycopg2.connect(
-        host=settings.postgres_host, port=settings.postgres_port,
-        user=settings.postgres_user, password=settings.postgres_password,
+        host=settings.postgres_host,
+        port=settings.postgres_port,
+        user=settings.postgres_user,
+        password=settings.postgres_password,
         dbname=dbname,
     )
     c.autocommit = True
@@ -47,9 +55,12 @@ def _conn(dbname: str):
 def _drop_scratch(cur) -> None:
     cur.execute(
         "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
-        "WHERE datname = %s AND pid <> pg_backend_pid()", (SCRATCH_DB,)
+        "WHERE datname = %s AND pid <> pg_backend_pid()",
+        (SCRATCH_DB,),
     )
-    cur.execute(sql.SQL("DROP DATABASE IF EXISTS {}").format(sql.Identifier(SCRATCH_DB)))
+    cur.execute(
+        sql.SQL("DROP DATABASE IF EXISTS {}").format(sql.Identifier(SCRATCH_DB))
+    )
 
 
 def migration_files() -> list[Path]:
@@ -64,7 +75,9 @@ def run() -> int:
     try:
         with admin.cursor() as cur:
             _drop_scratch(cur)
-            cur.execute(sql.SQL("CREATE DATABASE {}").format(sql.Identifier(SCRATCH_DB)))
+            cur.execute(
+                sql.SQL("CREATE DATABASE {}").format(sql.Identifier(SCRATCH_DB))
+            )
     finally:
         admin.close()
     print(f"[ok]   created scratch DB {SCRATCH_DB}")
@@ -74,11 +87,14 @@ def run() -> int:
     try:
         with c.cursor() as cur:
             for s in SCHEMAS:
-                cur.execute(sql.SQL("CREATE SCHEMA IF NOT EXISTS {}").format(sql.Identifier(s)))
+                cur.execute(
+                    sql.SQL("CREATE SCHEMA IF NOT EXISTS {}").format(sql.Identifier(s))
+                )
             print(f"[ok]   created {len(SCHEMAS)} schemas")
             for f in migration_files():
                 cleaned = "\n".join(
-                    ln for ln in f.read_text(encoding="utf-8").splitlines()
+                    ln
+                    for ln in f.read_text(encoding="utf-8").splitlines()
                     if not ln.strip().startswith("\\")
                 )
                 try:
