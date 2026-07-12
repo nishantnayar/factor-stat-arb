@@ -146,6 +146,14 @@ venv.bak/
 # mkdocs documentation
 /site
 
+# Jekyll build artifacts (inside docs/)
+docs/_site/
+docs/.jekyll-cache/
+docs/.jekyll-metadata
+docs/Gemfile.lock
+docs/.bundle/
+docs/vendor/
+
 # mypy
 .mypy_cache/
 .dmypy.json

@@ -1,0 +1,30 @@
+<!-- Mermaid diagram support: convert fenced code blocks to rendered diagrams -->
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+
+  document.addEventListener("DOMContentLoaded", async function () {
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: "dark",
+      themeVariables: {
+        background: "#1a1a2e",
+        primaryColor: "#4a6fa5",
+        primaryTextColor: "#ffffff",
+        lineColor: "#6c8ebf",
+        secondaryColor: "#2d2d2d",
+        tertiaryColor: "#333333"
+      }
+    });
+
+    // Replace <code class="language-mermaid"> blocks with <pre class="mermaid">
+    document.querySelectorAll("code.language-mermaid").forEach(function (el) {
+      var pre = el.parentElement;
+      var diagram = document.createElement("pre");
+      diagram.className = "mermaid";
+      diagram.textContent = el.textContent;
+      pre.replaceWith(diagram);
+    });
+
+    await mermaid.run();
+  });
+</script>

@@ -1,3 +1,14 @@
+---
+layout: single
+title: "Methodology"
+permalink: /methodology/
+toc: true
+toc_sticky: true
+toc_label: "Pipeline stages"
+sidebar:
+  nav: "docs"
+---
+
 # Methodology
 
 How Factor Stat Arb finds and screens tradable residuals. Each stage maps to a

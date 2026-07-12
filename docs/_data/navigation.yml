@@ -1,0 +1,19 @@
+# Sidebar navigation used by pages with sidebar: nav: "docs"
+docs:
+  - title: "Factor Stat Arb"
+    children:
+      - title: "Home"
+        url: /factor-stat-arb/
+      - title: "Methodology"
+        url: /factor-stat-arb/methodology/
+      - title: "Project Spec"
+        url: /factor-stat-arb/project-spec/
+
+# Top navigation bar
+main:
+  - title: "Methodology"
+    url: /factor-stat-arb/methodology/
+  - title: "Project Spec"
+    url: /factor-stat-arb/project-spec/
+  - title: "GitHub"
+    url: https://github.com/nishantnayar/factor-stat-arb

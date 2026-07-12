@@ -1,38 +1,85 @@
 ---
-title: "Factor Stat Arb"
-description: "Explainable factor-residual statistical arbitrage on US equities"
+layout: splash
+title: "Factor Statistical Arbitrage"
+permalink: /
+toc: false
+sidebar: false
+header:
+  overlay_color: "#1a1a2e"
+  overlay_filter: 0.55
+  actions:
+    - label: '<i class="fab fa-github"></i>&nbsp; View on GitHub'
+      url: "https://github.com/nishantnayar/factor-stat-arb"
+excerpt: >
+  Explainable factor-residual statistical arbitrage on US equities.
+  PCA decomposition &rarr; tradable ETF proxy mapping &rarr; OU residual mean-reversion &rarr; SHAP explainability.
+
+feature_row:
+  - title: "Methodology"
+    excerpt: "The factor pipeline stage by stage: PCA decomposition, ETF proxy mapping, OU residual fit, and discovery ranking."
+    url: "/factor-stat-arb/methodology/"
+    btn_label: "Read more"
+    btn_class: "btn--primary"
+  - title: "Project Spec"
+    excerpt: "Full design and milestone plan -- from data ingestion to paper execution and explainability."
+    url: "/factor-stat-arb/project-spec/"
+    btn_label: "Read more"
+    btn_class: "btn--primary"
+  - title: "Source Code"
+    excerpt: "Python 3.11, uv-managed environment, PostgreSQL, Prefect, Streamlit, Alpaca paper trading."
+    url: "https://github.com/nishantnayar/factor-stat-arb"
+    btn_label: "View repository"
+    btn_class: "btn--inverse"
 ---
 
-# Factor Statistical Arbitrage
+{% include feature_row %}
 
-Explainable factor-residual statistical arbitrage on US equities. Instead of
-searching combinatorially for pairs or baskets that cointegrate, Factor Stat Arb
-decomposes the whole universe's return covariance with PCA, maps each stock to a
-small set of **tradable ETF proxies**, and trades the idiosyncratic residual when
-it mean-reverts cleanly - explaining every signal along the way.
+## The idea
 
-## Start here
+Classic pairs and basket strategies hunt for a *pair* or *tuple* of tickers that happen
+to cointegrate -- a combinatorial search over discrete ticker sets, filtered by a strict
+statistical test. On real data that search tends to come back sparse and unstable.
 
-- **[Methodology](methodology.md)** - the factor pipeline stage by stage.
-- **[Project spec](PROJECT_SPEC.md)** - full design and milestone plan.
-- **Development** - infrastructure reference (database, Prefect, logging, testing).
+**Factor Stat Arb sidesteps the combinatorics.** It decomposes the entire universe's
+return covariance with PCA in a single pass, then asks one question of *every* stock:
+
+> After removing the common market/sector structure, does what's left mean-revert
+> quickly and cleanly?
+
+Each stock is regressed onto a small set of **tradable ETF proxies** (e.g. sector ETF +
+SPY), so the residual spread is directly executable -- and the loadings double as a
+plain-English explanation ("this name trades like 70% XLF, 20% SPY"). A confidence model
+and SHAP layer then score and explain each candidate signal before any capital is
+committed.
 
 ## At a glance
 
-- **Data**: PostgreSQL, ~2.5 years of hourly adjusted bars for 1,000+ symbols.
-- **Discovery**: PCA -> tradable ETF proxy regression -> OU residual screen ->
-  ranked candidates in `BasketRegistry`.
-- **Execution**: Alpaca **paper** only, behind the reused portfolio risk guards.
-- **Tooling**: managed end-to-end with [uv](https://github.com/astral-sh/uv);
-  `uv run main.py up` starts Prefect, the dashboard, and the data-ingestion worker.
+| | |
+|---|---|
+| **Data** | PostgreSQL, ~2.5 years of hourly adjusted bars for 1,000+ symbols |
+| **Discovery** | PCA &rarr; tradable ETF proxy regression &rarr; OU residual screen &rarr; ranked candidates |
+| **Execution** | Alpaca **paper** only, behind portfolio risk guards |
+| **Tooling** | [uv](https://github.com/astral-sh/uv)-managed; `uv run main.py up` starts Prefect + dashboard + worker |
 
-## Status
+## Project status
 
-The data foundation, factor discovery pipeline (PCA, proxy mapping, OU screen,
-`discover_factor_baskets.py`), and services are in place. The backtest engine and
-explainability layer are the active build. See the
-[project spec](PROJECT_SPEC.md) for the milestone checklist.
+The data foundation, factor discovery pipeline (PCA, proxy mapping, OU screen), and
+services are in place. The backtest engine and explainability layer are the active build.
 
-!!! warning "Not investment advice"
-    This is a technical and educational project. It runs against Alpaca's paper
-    endpoint only and has not been validated out-of-sample.
+- [x] Reproducible environment (uv, pinned Python 3.11, locked deps)
+- [x] PostgreSQL provisioned, schema built, ~8.7M market-data rows seeded
+- [x] PCA factor model + tradable-proxy mapping
+- [x] OU residual fit + discovery script
+- [ ] Factor backtest engine
+- [ ] Prefect discovery flow
+- [ ] Confidence model + SHAP explainability
+- [ ] Streamlit Factor Lab
+
+See the [Project Spec](/factor-stat-arb/project-spec/) for the full design and milestone plan.
+
+---
+
+**Disclaimer:** This is a technical and educational project, not investment advice.
+It runs against Alpaca's paper endpoint only and has not been validated over a meaningful
+out-of-sample period.
+{: .notice--warning}

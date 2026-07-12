@@ -1,0 +1,72 @@
+title: "Factor Stat Arb"
+subtitle: "Explainable Factor-Residual Statistical Arbitrage"
+description: >-
+  PCA decomposition, tradable ETF proxy mapping, OU residual mean-reversion,
+  and signal explainability via LightGBM + SHAP. Paper trading only via Alpaca.
+url: "https://nishantnayar.github.io"
+baseurl: "/factor-stat-arb"
+repository: "nishantnayar/factor-stat-arb"
+github_username: nishantnayar
+
+remote_theme: "mmistakes/minimal-mistakes@4.26.2"
+minimal_mistakes_skin: "dark"
+
+timezone: America/Chicago
+
+plugins:
+  - jekyll-sitemap
+  - jekyll-feed
+  - jekyll-include-cache
+
+author:
+  name: "Nishant Nayar"
+  github: "nishantnayar"
+  bio: "Algorithmic trader. Building explainable factor stat arb on US equities."
+  links:
+    - label: "GitHub"
+      icon: "fab fa-fw fa-github"
+      url: "https://github.com/nishantnayar"
+
+footer:
+  links:
+    - label: "GitHub"
+      icon: "fab fa-fw fa-github"
+      url: "https://github.com/nishantnayar/factor-stat-arb"
+
+# Reading files
+include:
+  - _pages
+
+exclude:
+  - js/
+  - Gemfile
+  - Gemfile.lock
+  - "*.gemspec"
+  - vendor/
+
+# Markdown
+markdown: kramdown
+kramdown:
+  input: GFM
+  auto_ids: true
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    css_class: highlight
+
+# Sass/SCSS
+sass:
+  sass_dir: _sass
+  style: compressed
+
+# Page defaults
+defaults:
+  - scope:
+      path: ""
+      type: pages
+    values:
+      layout: single
+      author_profile: true
+      toc: true
+      toc_sticky: true
+      sidebar:
+        nav: "docs"

@@ -1,3 +1,14 @@
+---
+layout: single
+title: "Project Spec"
+permalink: /project-spec/
+toc: true
+toc_sticky: true
+toc_label: "Contents"
+sidebar:
+  nav: "docs"
+---
+
 # factor-stat-arb
 
 Explainable factor residual statistical arbitrage. A standalone repo, forked from
