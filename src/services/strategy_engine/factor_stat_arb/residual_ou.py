@@ -18,10 +18,16 @@ from typing import Mapping
 import numpy as np
 import pandas as pd
 
-# Match the pairs discovery convention (hourly bars).
-DEFAULT_MIN_HALF_LIFE = 5.0
-DEFAULT_MAX_HALF_LIFE = 72.0
-DEFAULT_MIN_R2 = 0.60
+# Factor-residual half-life bounds (hourly bars). Calibrated to the measured
+# distribution of the drift-free residual level (median ~263h): drop ultra-fast
+# reverters (< ~48h, likely microstructure) and near-random-walk names (> ~400h).
+# Pairs used 5-72h, which is far too tight for factor residuals.
+DEFAULT_MIN_HALF_LIFE = 48.0
+DEFAULT_MAX_HALF_LIFE = 400.0
+# The AR(1) R2 on a residual LEVEL is near 1 by construction (autocorrelated), so
+# this is only a weak sanity floor; the meaningful quality gate is the proxy R2
+# applied at discovery time.
+DEFAULT_MIN_R2 = 0.0
 
 
 def build_log_spread(prices: pd.DataFrame, weights: Mapping[str, float]) -> pd.Series:
