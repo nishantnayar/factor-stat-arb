@@ -1,122 +1,62 @@
-# MkDocs Configuration
-site_name: Trading System Documentation
-site_description: Production-grade algorithmic trading system documentation
+site_name: Factor Stat Arb
+site_description: Explainable factor-residual statistical arbitrage on US equities
 site_author: Nishant Nayar
-site_url: https://nishantnayar.github.io/trading-system
+site_url: https://nishantnayar.github.io/factor-stat-arb
 
-# Documentation directory
 docs_dir: docs
 
-# Repository
-repo_name: nishantnayar/trading-system
-repo_url: https://github.com/nishantnayar/trading-system
+repo_name: nishantnayar/factor-stat-arb
+repo_url: https://github.com/nishantnayar/factor-stat-arb
 edit_uri: edit/main/docs/
 
-# Copyright
-copyright: Copyright &copy; 2025 Nishant Nayar
+copyright: Copyright &copy; 2026 Nishant Nayar
 
-# Theme configuration
 theme:
-  name: readthedocs
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
   features:
-    - navigation.tabs
     - navigation.sections
-    - navigation.expand
     - navigation.top
+    - content.code.copy
     - search.highlight
-    - search.share
-  show_sourcelink: false
-  show_prev_next: false
 
-# Extensions
 markdown_extensions:
+  - admonition
   - toc:
       permalink: true
-      title: On this page
-  - codehilite
-  - fenced_code
+  - pymdownx.highlight
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
           class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.tabbed:
       alternate_style: true
 
-# Page tree
 nav:
   - Home: index.md
-  - Getting Started: getting-started.md
-  - User Guide:
-    - Dashboard Overview: user-guide/dashboard.md
-    - Stock Screener: user-guide/stock-screener.md
-    - Trading Operations: user-guide/trading.md
-    - Strategy Management: user-guide/strategies.md
-    - Risk Management: user-guide/risk-management.md
-  - API Reference:
-    - Overview: api/index.md
-    - Data Ingestion:
-      - Overview: api/data-ingestion.md
-      - Data Ingestion Overview: api/data-ingestion-overview.md
-      - Polygon.io Integration: api/data-ingestion-polygon.md
-      - Yahoo Finance Integration: api/data-ingestion-yahoo.md
-      - Alpaca Integration: api/data-ingestion-alpaca.md
-    - Strategy Engine: api/strategy-engine.md
-    - Execution Engine: api/execution.md
-    - Risk Management: api/risk-management.md
-    - Analytics: api/analytics.md
-  - Data Sources:
-    - Overview: data-ingestion/data-sources.md
-    - Data Sources Overview: data-ingestion/data-sources-overview.md
-    - Polygon.io Integration: data-ingestion/data-sources-polygon.md
-    - Yahoo Finance Integration: data-ingestion/data-sources-yahoo.md
-    - Data Source Comparison: data-ingestion/data-sources-comparison.md
-    - Implementation Plan: data-ingestion/data-sources-implementation.md
-    - Yahoo Finance Attributes: data-ingestion/yahoo-finance-attributes.md
-  - Troubleshooting: troubleshooting.md
-  - Security: SECURITY.md
-  - Performance: PERFORMANCE.md
+  - Methodology: methodology.md
+  - Project Spec: PROJECT_SPEC.md
   - Development:
-    - Overview: development/index.md
-    - Architecture:
-      - Overview: development/architecture.md
-      - System Overview: development/architecture-overview.md
-      - Services: development/architecture-services.md
-      - Database: development/architecture-database.md
-      - UI: development/architecture-ui.md
-      - Prefect: development/architecture-prefect.md
-      - Deployment: development/architecture-deployment.md
-      - Timezone: development/architecture-timezone.md
-    - Stock Screener Architecture: development/stock-screener-architecture.md
-    - Database Architecture:
-      - Overview: development/database.md
-      - Database Overview: development/database-overview.md
+      - Architecture: development/architecture-overview.md
       - Database Schema: development/database-schema.md
-      - Database Optimization: development/database-optimization.md
-    - Logging Architecture: development/logging.md
-    - Prefect Deployment:
       - Prefect Deployment: development/prefect-deployment.md
-      - Operations: development/prefect-deployment-operations.md
-      - Configuration: development/prefect-deployment-configuration.md
-      - Code Patterns: development/prefect-deployment-code-patterns.md
-      - Advanced Topics: development/prefect-deployment-advanced.md
-    - Testing Strategy: development/testing.md
-    - CI/CD Pipeline: development/ci-cd.md
-    - Session Management Testing: development/session-management-testing.md
-  - Contributing: ../CONTRIBUTING.md
-  - Changelog: ../CHANGELOG.md
+      - Logging: development/logging.md
+      - Testing: development/testing.md
+  - Data:
+      - Yahoo Finance: data-ingestion/data-sources-yahoo.md
 
-# Plugins
-plugins:
-  - search:
-      lang: en
-
-# Extra configuration
-extra:
-  version: 1.0.0
-  last_updated: December 2025
-  status: ✅ Core Features Complete | 🚧 Enhanced Features In Progress
-
-# JavaScript for Mermaid diagrams
-extra_javascript:
-  - https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js
-  - js/mermaid-init.js
+# Other pages under docs/ are carried-over trading-system reference, kept on disk
+# but omitted from the nav for now.
