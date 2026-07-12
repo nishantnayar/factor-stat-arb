@@ -8,6 +8,8 @@ docs:
         url: /factor-stat-arb/methodology/
       - title: "Project Spec"
         url: /factor-stat-arb/project-spec/
+      - title: "About"
+        url: /factor-stat-arb/about/
 
 # Top navigation bar
 main:
@@ -15,5 +17,7 @@ main:
     url: /factor-stat-arb/methodology/
   - title: "Project Spec"
     url: /factor-stat-arb/project-spec/
+  - title: "About"
+    url: /factor-stat-arb/about/
   - title: "GitHub"
     url: https://github.com/nishantnayar/factor-stat-arb

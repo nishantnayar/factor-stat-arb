@@ -34,6 +34,16 @@ feature_row:
 
 {% include feature_row %}
 
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
+[![uv](https://img.shields.io/badge/deps-uv-7c3aed.svg)](https://github.com/astral-sh/uv)
+[![PostgreSQL](https://img.shields.io/badge/storage-PostgreSQL-336791.svg)](https://www.postgresql.org/)
+[![Prefect](https://img.shields.io/badge/orchestration-Prefect-024dfd.svg)](https://www.prefect.io/)
+[![Alpaca](https://img.shields.io/badge/execution-Alpaca%20paper-ffb86c.svg)](https://alpaca.markets/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/nishantnayar/factor-stat-arb/blob/main/LICENSE)
+[![Status: WIP](https://img.shields.io/badge/status-work--in--progress-orange.svg)](#project-status)
+
+---
+
 ## The idea
 
 Classic pairs and basket strategies hunt for a *pair* or *tuple* of tickers that happen
@@ -76,6 +86,20 @@ services are in place. The backtest engine and explainability layer are the acti
 - [ ] Streamlit Factor Lab
 
 See the [Project Spec](/factor-stat-arb/project-spec/) for the full design and milestone plan.
+
+## Pipeline
+
+```mermaid
+flowchart LR
+    A[Hourly adjusted\nprices, full universe] --> B[PCA factor\ndecomposition]
+    B --> C[Map factors to\ntradable ETF proxies]
+    C --> D[Residual spread\n+ OU half-life fit]
+    D --> E[Signal\nz-score thresholds]
+    E --> F[Backtest\nSharpe / DD / hit-rate]
+    E --> G[Confidence model\n+ SHAP explanation]
+    F --> H[Paper execution\n+ portfolio risk guards]
+    G --> H
+```
 
 ---
 

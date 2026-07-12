@@ -13,6 +13,10 @@ minimal_mistakes_skin: "dark"
 
 timezone: America/Chicago
 
+search: true
+search_full_content: true
+breadcrumbs: true
+
 plugins:
   - jekyll-remote-theme
   - jekyll-sitemap

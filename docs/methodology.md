@@ -5,6 +5,7 @@ permalink: /methodology/
 toc: true
 toc_sticky: true
 toc_label: "Pipeline stages"
+read_time: true
 sidebar:
   nav: "docs"
 ---

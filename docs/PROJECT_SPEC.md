@@ -5,6 +5,7 @@ permalink: /project-spec/
 toc: true
 toc_sticky: true
 toc_label: "Contents"
+read_time: true
 sidebar:
   nav: "docs"
 ---
