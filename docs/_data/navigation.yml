@@ -3,21 +3,21 @@ docs:
   - title: "Factor Stat Arb"
     children:
       - title: "Home"
-        url: /factor-stat-arb/
+        url: /
       - title: "Methodology"
-        url: /factor-stat-arb/methodology/
+        url: /methodology/
       - title: "Project Spec"
-        url: /factor-stat-arb/project-spec/
+        url: /project-spec/
       - title: "About"
-        url: /factor-stat-arb/about/
+        url: /about/
 
 # Top navigation bar
 main:
   - title: "Methodology"
-    url: /factor-stat-arb/methodology/
+    url: /methodology/
   - title: "Project Spec"
-    url: /factor-stat-arb/project-spec/
+    url: /project-spec/
   - title: "About"
-    url: /factor-stat-arb/about/
+    url: /about/
   - title: "GitHub"
     url: https://github.com/nishantnayar/factor-stat-arb

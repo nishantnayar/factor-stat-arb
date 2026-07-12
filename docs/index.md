@@ -17,12 +17,12 @@ excerpt: >
 feature_row:
   - title: "Methodology"
     excerpt: "The factor pipeline stage by stage: PCA decomposition, ETF proxy mapping, OU residual fit, and discovery ranking."
-    url: "/factor-stat-arb/methodology/"
+    url: "/methodology/"
     btn_label: "Read more"
     btn_class: "btn--primary"
   - title: "Project Spec"
     excerpt: "Full design and milestone plan -- from data ingestion to paper execution and explainability."
-    url: "/factor-stat-arb/project-spec/"
+    url: "/project-spec/"
     btn_label: "Read more"
     btn_class: "btn--primary"
   - title: "Source Code"
@@ -85,7 +85,7 @@ services are in place. The backtest engine and explainability layer are the acti
 - [ ] Confidence model + SHAP explainability
 - [ ] Streamlit Factor Lab
 
-See the [Project Spec](/factor-stat-arb/project-spec/) for the full design and milestone plan.
+See the [Project Spec]({{ "/project-spec/" | relative_url }}) for the full design and milestone plan.
 
 ## Pipeline
 
