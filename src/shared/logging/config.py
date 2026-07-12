@@ -196,7 +196,9 @@ def load_logging_config(config_path: Optional[str] = None) -> LoggingConfig:
     # Allow disabling database logging entirely (e.g. CI, environments with no DB)
     log_database_enabled = os.getenv("LOG_DATABASE_ENABLED")
     if log_database_enabled is not None:
-        config_data["database"]["enabled"] = log_database_enabled.lower() in (
+        database_config = config_data["database"]
+        assert isinstance(database_config, dict)
+        database_config["enabled"] = log_database_enabled.lower() in (
             "true",
             "1",
             "yes",
