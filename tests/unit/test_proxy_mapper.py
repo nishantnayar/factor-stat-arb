@@ -50,6 +50,22 @@ class TestProxyMapper:
         resid = mapper.residual_series(y, fit)
         assert resid.abs().max() < 1e-6
 
+    def test_residual_level_is_cumsum_and_drift_free(self):
+        proxies = _proxy_returns()
+        rng = np.random.default_rng(3)
+        # stock has an alpha drift plus mean-zero idiosyncratic noise
+        y = (0.5 * proxies["SPY"] + 5e-4 + rng.normal(0, 0.005, len(proxies))).rename(
+            "X"
+        )
+        mapper = ProxyMapper(proxies)
+        fit = mapper.fit_symbol(y, proxies=["SPY"])
+        level = mapper.residual_level(y, fit)
+        resid = mapper.residual_series(y, fit)
+        # level is the cumulative sum of the residual series
+        assert np.allclose(level.to_numpy(), resid.cumsum().to_numpy())
+        # OLS residuals are mean-zero, so the level has no net drift (ends near 0)
+        assert abs(level.iloc[-1]) < abs(level).max()
+
     def test_proxies_for_uses_broad_plus_sector(self):
         mapper = ProxyMapper(_proxy_returns())
         assert mapper._proxies_for("Financial Services") == ["SPY", "XLF"]

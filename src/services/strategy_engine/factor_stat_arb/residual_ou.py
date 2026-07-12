@@ -35,7 +35,10 @@ def build_log_spread(prices: pd.DataFrame, weights: Mapping[str, float]) -> pd.S
         raise ValueError("none of the weighted symbols are in the price frame")
     log_p = np.log(prices[cols].astype(float))
     w = np.array([weights[c] for c in cols])
-    return (log_p * w).sum(axis=1).dropna()
+    # min_count=len(cols): a spread point requires EVERY leg present, else NaN.
+    # (Plain .sum skips NaN, which would emit a partial spread on rows where a leg
+    # is missing - e.g. the stock trades before the ETF history starts.)
+    return (log_p * w).sum(axis=1, min_count=len(cols)).dropna()
 
 
 @dataclass

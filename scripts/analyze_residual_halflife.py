@@ -29,10 +29,7 @@ from src.services.strategy_engine.factor_stat_arb.proxies import (  # noqa: E402
     load_universe_symbols,
 )
 from src.services.strategy_engine.factor_stat_arb.proxy_mapper import ProxyMapper  # noqa: E402
-from src.services.strategy_engine.factor_stat_arb.residual_ou import (  # noqa: E402
-    build_log_spread,
-    fit_ou,
-)
+from src.services.strategy_engine.factor_stat_arb.residual_ou import fit_ou  # noqa: E402
 
 
 def main() -> int:
@@ -45,15 +42,15 @@ def main() -> int:
 
     etf_ret = clean_returns(to_log_returns(etf_px))
     stk_ret = clean_returns(to_log_returns(stk_px))
-    all_px = etf_px.join(stk_px, how="outer")
     mapper = ProxyMapper(etf_ret)
 
     rows = []
     for sym in stk_ret.columns:
         try:
             fit = mapper.fit_symbol(stk_ret[sym], sectors.get(sym))
-            spread = build_log_spread(all_px, fit.basket_weights())
-            ou = fit_ou(spread)
+            # Fit OU on the drift-free residual level, not the raw (alpha-drifting)
+            # log-price spread.
+            ou = fit_ou(mapper.residual_level(stk_ret[sym], fit))
         except Exception:  # noqa: BLE001
             continue
         rows.append(
@@ -88,7 +85,9 @@ def main() -> int:
         corr = good["proxy_r2"].corr(good["half_life"])
         print(f"\ncorr(proxy_r2, half_life): {corr:+.2f}")
         print("half-life by proxy_r2 tercile:")
-        good = good.assign(tier=pd.qcut(good["proxy_r2"], 3, labels=["low", "mid", "high"]))
+        good = good.assign(
+            tier=pd.qcut(good["proxy_r2"], 3, labels=["low", "mid", "high"])
+        )
         print(good.groupby("tier", observed=True)["half_life"].median().to_string())
     return 0
 

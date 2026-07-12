@@ -98,3 +98,15 @@ class TestBuildLogSpread:
         prices = pd.DataFrame({"AAA": [100.0, 101.0]})
         with pytest.raises(ValueError):
             build_log_spread(prices, {"ZZZ": 1.0})
+
+    def test_drops_rows_missing_a_leg(self):
+        # A leg (SPY) is NaN on early rows; those rows must be dropped, NOT emitted
+        # as a partial (stock-only) spread. Regression test for the skipna bug.
+        idx = pd.date_range("2026-01-01", periods=4, freq="h", tz="UTC")
+        prices = pd.DataFrame(
+            {"AAA": [100.0, 101.0, 102.0, 103.0], "SPY": [np.nan, np.nan, 50.0, 51.0]},
+            index=idx,
+        )
+        spread = build_log_spread(prices, {"AAA": 1.0, "SPY": -1.0})
+        assert len(spread) == 2  # only the 2 rows where both legs exist
+        assert np.isclose(spread.iloc[0], math.log(102.0) - math.log(50.0))

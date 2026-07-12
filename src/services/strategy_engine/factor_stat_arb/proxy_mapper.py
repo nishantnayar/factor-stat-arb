@@ -103,6 +103,18 @@ class ProxyMapper:
         pred = fit.alpha + df[cols].to_numpy() @ np.array([fit.betas[c] for c in cols])
         return pd.Series(df["y"].to_numpy() - pred, index=df.index, name=fit.symbol)
 
+    def residual_level(self, stock_returns: pd.Series, fit: ProxyFit) -> pd.Series:
+        """Cumulative residual series - the drift-free target for the OU fit.
+
+        This is the Avellaneda-Lee residual process X_t = sum of idiosyncratic
+        returns. Because the regression alpha is subtracted, it has no linear
+        drift, so its OU half-life measures true idiosyncratic mean reversion.
+        (The raw log-price spread log P_stock - sum beta*log P_proxy still carries
+        the alpha drift and is only appropriate as the traded spread, where a
+        rolling z-score absorbs the drift.)
+        """
+        return self.residual_series(stock_returns, fit).cumsum()
+
     def fit_universe(
         self,
         stock_returns: pd.DataFrame,
