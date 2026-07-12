@@ -12,135 +12,166 @@ sidebar:
 
 # Methodology
 
-How Factor Statistical Arbitrage finds and screens tradable residuals, stage by stage.
+How this project finds stocks that look "stretched" relative to their market
+and sector, and decides which of those are actually worth watching. Explained
+stage by stage, in plain language first.
+
+## The short version
+
+Take a stock's price history. Subtract out the part that's just the stock
+following the overall market and its sector up or down. What's left is the
+part that's specific to that company -- and sometimes that leftover behaves
+like a rubber band: it stretches away from its normal range and then snaps
+back. This pipeline finds stocks where that rubber-band behavior is strong,
+clean, and fast enough to be worth trading, and hedges each one with real
+ETFs so the "subtract the market" step is something you can actually execute,
+not just a spreadsheet exercise.
 
 ## Pipeline overview
 
 ```mermaid
 flowchart LR
-    A[Hourly adjusted prices\nfull universe] --> B[PCA factor model]
+    A[Hourly adjusted prices\nfull universe] --> B[Find common market/\nsector structure]
     A --> C[ETF proxy returns]
-    C --> D[Proxy mapper OLS]
+    C --> D[Hedge each stock with\nreal ETFs]
     B -. context .-> D
-    D --> E[Residual level]
-    E --> F[OU / AR1 fit]
-    F --> G[Screen: R2 + half-life]
+    D --> E[Leftover, stock-specific\nprice path]
+    E --> F[Fit its snap-back\nbehavior]
+    F --> G[Screen: hedge quality\n+ snap-back speed]
     G --> H[Rank and store\nin BasketRegistry]
 ```
 
 ## 1. Data
 
-Hourly split/dividend-adjusted closes are pulled into a wide `time x symbol`
-matrix and converted to log returns. The cleaning step drops sparse symbols
-(too many missing bars) and absurd ticks so downstream steps receive a dense,
-reliable matrix.
+Hourly split/dividend-adjusted closing prices for roughly 1,000 stocks are
+pulled into one big table (time down the side, ticker across the top) and
+converted into returns (percent price change bar to bar). Symbols with too
+many missing bars, or price ticks that are obviously bad data, are dropped so
+later steps work off clean, complete numbers.
 
-The stock universe (~1,000 names) is kept separate from the ETF proxies used
-for hedging, so ETFs never enter the PCA and distort the factor structure.
+The stocks being analyzed are kept separate from the ETFs used later as
+hedges, so the ETFs don't quietly influence the "what's common to the whole
+market" calculation.
 
-## 2. Factor model
+## 2. Finding the common market/sector structure
 
-`FactorModel` standardizes each symbol's returns and fits PCA across the
-cross-section, keeping the smallest number of components that explain a target
-share of variance (default ~60%). It exposes factor **loadings**, **factor
-returns**, the common-factor **reconstruction**, and the **residuals** left
-after removing common structure.
+This step (technically **PCA**, principal component analysis) looks across
+all ~1,000 stocks at once and asks: what handful of underlying "themes" -- a
+broad market move, an energy-sector move, a rates-sensitive move, and so on
+-- explain most of the day-to-day co-movement? It keeps just enough of these
+themes to explain a target share (about 60%) of all the shared movement
+across stocks.
 
-On the live universe, ~22 components explain 60% of variance. PC1 -- the
-broad market factor -- accounts for roughly 20% on its own.
+On the current universe, it takes about 22 of these themes to reach 60%, and
+the single biggest one -- the broad market itself -- explains roughly 20% on
+its own.
 
-The factor model answers "what is the common structure?" The actual hedge
-comes from the proxy mapper, because PCA factors are statistical constructs
-and not directly tradable instruments.
+This step only answers "what's the common story here?" It doesn't by itself
+tell you how to hedge a specific stock -- that's the next step, because these
+statistical "themes" aren't things you can directly buy or sell.
 
-## 3. Proxy mapper
+## 3. Hedging each stock with real, tradable ETFs
 
-Each stock's returns are regressed (OLS) on a small set of **liquid, tradable
-ETFs** -- SPY plus the stock's SPDR sector ETF (e.g. XLF for financials,
-XLE for energy). The fitted betas become the hedge weights:
+For each stock, its returns are compared (via linear regression) against a
+small set of **liquid, real ETFs** -- an S&P 500 fund (SPY) plus that stock's
+sector ETF (e.g. XLF for financials, XLE for energy). This produces a
+plain-English readout like:
 
-> "JPM trades like 1.23 XLF, roughly SPY-neutral, R2 = 0.72."
+> "JPM trades like 1.23x XLF, with little independent S&P 500 exposure;
+> this relationship explains about 72% of JPM's moves."
 
-Because regressing returns is equivalent to regressing log-price changes, the
-betas are exactly the weights of a log-price spread basket:
-`+1` on the stock, `-beta` on each proxy.
+Because this is done on log prices, the same numbers double as portfolio
+weights: buy 1 share-equivalent of the stock, short 1.23 units of XLF, and
+you've built a basket whose value only reflects what's specific to JPM.
 
-This step is what makes the strategy both **directly executable** (weights map
-to real tradable instruments) and **interpretable** (each basket has a
-sector/market loading that a human can read).
+This is the step that makes the whole approach **actually tradable** (the
+hedge is made of real ETFs you can buy or sell) and **understandable** (every
+stock gets a plain sector/market label a non-specialist can read).
 
-### Two residual objects
+### Two versions of "the leftover"
 
-| Object | Definition | Use |
+There are actually two related numbers, used for different purposes:
+
+| Object | What it is | Used for |
 |---|---|---|
-| **Traded spread** | `log P_stock - sum(beta * log P_proxy)` | What gets executed; z-scored against a rolling window |
-| **Residual level** | Cumulative idiosyncratic returns (Avellaneda-Lee) | OU half-life is estimated here -- drift-free, so the estimate is unbiased |
+| **Traded spread** | The basket you'd actually hold (stock minus its ETF hedge, in price terms) | This is what gets traded, tracked against its own recent average |
+| **Residual level** | The running total of the stock's day-by-day "leftover" moves, with any steady drift removed | Used to measure snap-back speed accurately -- drift would otherwise make the estimate misleading |
 
-The distinction matters: the traded spread carries the regression alpha as a
-linear drift, which would inflate the OU half-life estimate.
-`residual_level()` removes that drift before fitting.
+The distinction matters because the tradeable basket can carry a small steady
+upward or downward drift from the hedge-fitting step, and that drift would
+distort the snap-back measurement if left in. So the snap-back speed is
+measured on the drift-free version instead.
 
-## 4. OU fit and screening
+## 4. Measuring the snap-back and screening candidates
 
-The residual level is fit as an AR(1) process `s_t = a + b*s_{t-1} + eps`
--- the discrete Ornstein-Uhlenbeck model. From the fitted coefficient `b`:
+The leftover price path is fit to a simple statistical model of "how strongly
+does this pull back toward its average, and how fast" (technically: an
+Ornstein-Uhlenbeck / AR(1) mean-reversion model). That fit produces:
 
-- Mean-reversion speed: `theta = -ln(b)`
-- **Half-life**: `ln(2) / theta` (bars = hours)
-- Long-run mean and equilibrium standard deviation
+- A **pull strength**: how hard it's pulled back on average
+- A **half-life**: on average, how many hours it takes to close half the gap
+  back to normal -- the single most intuitive number here
+- Its long-run average level and typical amount of wobble around that average
 
-A candidate passes the screen if `0 < b < 1` (genuinely mean-reverting) and
-its half-life falls inside the configured bounds.
+A stock only qualifies as a candidate if the model shows genuine pull-back
+behavior (not just drifting randomly) and its half-life falls inside a
+sensible window.
 
-### Half-life calibration
+### Picking that window
 
-Factor residuals mean-revert considerably more slowly than cointegrated pairs.
-Measured across the live universe on drift-free residuals:
+Measured across the live universe: half-lives cluster around 166 to 393
+hours, with a **median of about 263 hours (~38 trading days)**. That's much
+slower than classic pairs trading, which is expected -- this leftover is a
+subtler signal than "two nearly identical stocks temporarily diverge."
 
-| p25 | Median | p75 |
-|---|---|---|
-| 166h | **263h (~38 trading days)** | 393h |
+The screen keeps candidates between **48 and 400 hours**:
 
-The default screen is **48--400h**:
-
-- Below 48h: likely microstructure noise, not a structural factor residual.
-- Above 400h: effectively a random walk over any practical holding period.
+- Faster than 48h is probably just noise, not a real repeating pattern.
+- Slower than 400h is so close to a random walk that it's not worth waiting for
+  in practice.
 
 ## 5. Discovery and ranking
 
-The discovery script runs the full chain over the universe:
+The discovery script runs the whole pipeline over every stock in the universe:
 
-1. Proxy-regress each stock; keep those with `proxy_r2 >= 0.30`.
-2. Build the residual level, fit OU, keep half-lives in `48--400h`.
-3. Rank survivors by `proxy_r2 * z_score_abs_mean` (fit quality x tradability).
-4. Store the top-N in `strategy_engine.basket_registry` with
-   `is_active=False` pending manual review.
+1. Fit each stock's ETF hedge; keep only those where the hedge explains at
+   least 30% of the stock's moves (a decent fit, not noise).
+2. Measure the snap-back speed on the drift-free leftover; keep only
+   half-lives between 48 and 400 hours.
+3. Rank the survivors by combining hedge quality with how tradable the signal
+   looks in practice.
+4. Save the best candidates to the basket registry, flagged as inactive until
+   a human reviews them.
 
 ```bash
 uv run scripts/discover_factor_baskets.py --dry-run      # preview, no writes
 uv run scripts/discover_factor_baskets.py --top-n 50     # discover + store
 ```
 
-A recent run produced 50 candidates; Energy and Financials dominate because
-tight sector-ETF tracking yields the cleanest residuals. Example:
-`FSA_XOM` = XOM hedged with SPY + XLE, half-life 192h, proxy R2 0.83.
+A recent run produced 50 candidates; Energy and Financials stocks dominate the
+list, because those sectors have ETFs that track their member stocks
+unusually well, which makes for a cleaner leftover signal. Example: Exxon
+(XOM), hedged with SPY + the energy ETF XLE, has a half-life around 192 hours
+and the hedge explains 83% of its moves.
 
-### What gets stored
+### What gets stored for each candidate
 
-| Column | Factor meaning |
+| Column | What it means in plain terms |
 |---|---|
-| `hedge_weights` | `+1` stock, `-beta` each proxy (log-price spread weights) |
-| `half_life_hours` | OU half-life of the drift-free residual |
-| `min_correlation` | Proxy regression R2 (fit strength) |
-| `coint_pvalue` | `1 - proxy_r2` (fit-quality analog to a p-value) |
-| `rank_score` | `proxy_r2 * z_score_abs_mean` |
+| `hedge_weights` | How much of the stock to hold vs. how much of each ETF to short |
+| `half_life_hours` | How many hours, on average, to close half the gap back to normal |
+| `min_correlation` | How well the ETF hedge explains the stock's moves |
+| `coint_pvalue` | A fit-quality score in the same spirit as the correlation above |
+| `rank_score` | Overall ranking, combining hedge quality and how tradable the signal looks |
 
 ## What comes next
 
-The backtest engine (`FactorBacktestEngine`) validates each candidate before
-activation -- Sharpe ratio, max drawdown, and hit rate gates. The
-explainability layer (LightGBM confidence model + SHAP) then scores and
-explains each live signal candidate.
+Before any candidate is traded even on paper, it still needs to prove itself
+against history: the backtest engine checks things like profit-per-risk-taken
+(Sharpe ratio), the worst losing streak it would have hit (max drawdown), and
+how often it would have actually been right. After that, a scoring model
+grades each live candidate's confidence and explains, in plain terms, which
+factors drove that grade.
 
 See the [Architecture]({{ "/project-spec/" | relative_url }}) page for the
 full system design and milestone plan.

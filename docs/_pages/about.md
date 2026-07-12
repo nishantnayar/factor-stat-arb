@@ -10,30 +10,44 @@ sidebar:
 
 ## The project
 
-**Factor Statistical Arbitrage** is an open-source research system for explainable
-factor-residual statistical arbitrage on US equities.
+**Factor Statistical Arbitrage** is an open-source research project that looks
+for stocks whose price has drifted a little out of step with their market and
+sector, on the idea that the gap tends to close again. It's built so the
+reasoning behind every trade idea can actually be read and understood, not
+just trusted blindly.
 
-Rather than searching combinatorially for pairs of tickers that happen to
-cointegrate, the system decomposes the entire universe's return covariance
-with PCA in a single pass and asks one question of every stock: *does what's
-left after removing the common market and sector structure mean-revert cleanly
-enough to trade?*
+The classic way to look for this ("pairs trading") is to search through
+thousands of pairs of tickers looking for two that have historically moved
+together, then wait for one of those pairs to drift apart. It's a slow,
+brute-force search, and pairs that worked in the past often quietly stop
+working.
 
-Four properties make this approach distinct:
+This project takes a different angle: instead of searching for pairs, it
+looks at the whole market at once, mathematically separates "what moved
+because of the broad market and sector" from "what's left over for this
+specific stock," and checks every stock for the same thing -- is the leftover
+part currently stretched away from normal, and does it reliably come back?
 
-- **Universe-wide.** Every stock is evaluated in the same PCA pass -- no
-  combinatorial search, no cherry-picked pairs.
-- **Tradable hedges.** Each stock is regressed onto liquid ETFs (SPY + its
-  sector ETF), so the hedge portfolio is directly executable, not a synthetic
-  statistical construct.
-- **Interpretable.** The regression loadings read as a plain-English exposure:
-  "XOM trades like 0.85 XLE + 0.15 SPY." Every candidate signal comes with
-  this label before any capital is committed.
-- **Explainable signals.** A LightGBM confidence model and SHAP layer score
-  and explain each candidate signal against historical trade outcomes.
+Four things make this approach distinct:
 
-All execution is paper-only via Alpaca. Nothing here constitutes investment
-advice.
+- **Looks at everything at once.** Every stock in the universe (~1,000
+  names) is checked in a single pass -- no combing through pairs one at a
+  time, no cherry-picking.
+- **Hedges with things you can actually trade.** Each stock's market/sector
+  exposure is measured against a couple of liquid, real ETFs (an S&P 500 fund
+  plus its sector fund), not an abstract number -- so the hedge is something
+  you could really buy or sell.
+- **Explains itself in plain English.** The result reads like "this stock
+  trades like 85% its energy-sector ETF plus 15% the S&P 500" -- a label a
+  non-specialist can understand, attached to every candidate before any money
+  (paper money) moves.
+- **Grades its own confidence.** A separate scoring model looks at each
+  candidate trade against how similar setups have played out historically,
+  and explains -- feature by feature -- why it's more or less confident in
+  this one.
+
+All execution is paper-only via Alpaca -- no real money is ever at risk.
+Nothing here constitutes investment advice.
 
 ## Tech stack
 
