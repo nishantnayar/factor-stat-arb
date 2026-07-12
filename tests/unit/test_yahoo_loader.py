@@ -713,10 +713,11 @@ class TestYahooDataLoader:
 
     @pytest.mark.asyncio
     async def test_load_all_data_success(
-        self, loader, mock_company_info, mock_key_statistics, setup_test_tables
+        self, loader, mock_company_info, mock_key_statistics
     ):
         """Test successful loading of all data types"""
         with (
+            patch.object(loader, "load_market_data", return_value=0),
             patch.object(loader, "load_company_info", return_value=True),
             patch.object(loader, "load_key_statistics", return_value=True),
             patch.object(loader, "load_institutional_holders", return_value=0),
@@ -743,11 +744,10 @@ class TestYahooDataLoader:
             assert result["splits"] == 0  # Not loaded by default
 
     @pytest.mark.asyncio
-    async def test_load_all_data_with_options(
-        self, loader, mock_company_info, setup_test_tables
-    ):
+    async def test_load_all_data_with_options(self, loader, mock_company_info):
         """Test loading all data with specific options"""
         with (
+            patch.object(loader, "load_market_data", return_value=0),
             patch.object(loader, "load_company_info", return_value=True),
             patch.object(loader, "load_key_statistics", return_value=False),
             patch.object(loader, "load_institutional_holders", return_value=0),
@@ -784,7 +784,7 @@ class TestYahooDataLoader:
             assert result["esg_scores"] == 1  # True gets converted to 1
 
     @pytest.mark.asyncio
-    async def test_load_all_symbols_data_success(self, loader, setup_test_tables):
+    async def test_load_all_symbols_data_success(self, loader):
         """Test successful loading of all symbols data"""
         with (
             patch.object(loader, "_get_active_symbols", return_value=["AAPL", "MSFT"]),
@@ -814,7 +814,7 @@ class TestYahooDataLoader:
             assert mock_market_data.call_count == 4  # 2 calls per symbol
 
     @pytest.mark.asyncio
-    async def test_load_all_symbols_data_with_options(self, loader, setup_test_tables):
+    async def test_load_all_symbols_data_with_options(self, loader):
         """Test loading all symbols data with specific options"""
         with (
             patch.object(loader, "_get_active_symbols", return_value=["AAPL"]),
