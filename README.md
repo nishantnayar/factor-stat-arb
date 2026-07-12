@@ -5,9 +5,9 @@
 **Every stock in the universe, screened for mean-reversion — in one pass, not a
 pairwise search.**
 
-PCA finds the common structure. A tradable ETF hedge removes it. What's left either
-mean-reverts cleanly or it doesn't — and every signal comes with a plain-English
-reason before it fires.
+A single statistical pass finds the common structure across the whole market. A
+tradable ETF hedge removes it. What's left either mean-reverts cleanly or it
+doesn't — and every signal comes with a plain-English reason before it fires.
 
 [![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
 [![Package manager: uv](https://img.shields.io/badge/deps-uv-purple.svg)](https://github.com/astral-sh/uv)
@@ -19,18 +19,58 @@ reason before it fires.
 
 ---
 
-## The problem with pairs trading
+## What it does
 
-Classic pairs and basket strategies search for *tuples* of tickers that happen to
-cointegrate — a combinatorial search over discrete ticker sets, filtered by a strict
-statistical test. On real data that search comes back sparse, unstable, and slow to
-re-run as correlations shift.
+Most stocks drift with the market and their sector — that shared movement is noise
+you can't reliably trade. This project's job is to strip that shared movement away,
+automatically, for every stock in the market at once, and see what's left over.
 
-## The idea
+What's left over sometimes behaves in a very useful way: it wanders off, then drifts
+back — a pattern called **mean reversion**. When that pattern shows up cleanly and
+reliably, it's a tradable opportunity. When it doesn't, the stock is skipped.
 
-**Factor Statistical Arbitrage skips the combinatorics entirely.** It decomposes the whole
-universe's return covariance with PCA in a single pass, then asks one question of
-*every* stock at once:
+Three things make this more than a signal generator:
+
+- **It checks the whole market at once**, not one hand-picked pair at a time — so it
+  finds opportunities a human screening pairs one by one would simply never get to.
+- **Every position is hedged with real, liquid ETFs** (like SPY or a sector fund), so
+  what the system wants to trade is always something that can actually be bought and
+  sold.
+- **Every signal comes with a reason**, in plain English — which sector exposure was
+  removed, how confident the model is, and why — not just a chart and a z-score.
+
+It trades on paper only (no real money), against a live market-data feed, so the
+whole loop — find, size, explain, execute, review — can be validated before any
+capital is ever at risk.
+
+## Why not just trade pairs?
+
+The traditional approach — **pairs trading** — looks for two stocks whose prices
+historically move together, bets that the relationship holds, and trades the gap
+when they diverge. Finding good pairs by hand or by brute-force search is slow,
+the good pairs are rare, and yesterday's winning pair can stop working with no
+warning.
+
+This project replaces that hand-picked search with a single statistical pass, called
+**Principal Component Analysis (PCA)**, over the entire universe of stocks, so every
+stock is screened the same way, all the time, and the "hedge" for each one is picked
+automatically from liquid, tradable ETFs rather than another hand-picked stock.
+
+| | Pairwise trading | This project |
+|---|---|---|
+| **How opportunities are found** | Manually or by brute-force search over ticker pairs | One statistical pass over the whole market |
+| **What hedges the position** | Another stock, picked by hand | A liquid ETF (e.g. SPY, sector fund), picked automatically |
+| **What you get out** | A pair, or nothing | Every stock, ranked, with a reason attached |
+| **Why trust the signal** | "The statistical test passed" | A plain-English explanation of why, and how confident the model is |
+
+---
+
+## The technical version
+
+*Skip this section unless you want the mechanics.*
+
+Factor Statistical Arbitrage decomposes the whole universe's return covariance with
+PCA in a single pass, then asks one question of *every* stock at once:
 
 > After removing the common market/sector structure, does what's left mean-revert
 > quickly and cleanly?
@@ -41,15 +81,9 @@ The regression weights double as a plain-English explanation:
 
 > "JPM trades like 1.23x XLF, roughly SPY-neutral, R² = 0.72, half-life 4.2h."
 
-A confidence model and SHAP layer then score and explain each candidate before any
-capital is committed — so every trade has a reason attached, not just a z-score.
-
-| | Pairwise cointegration search | Factor Statistical Arbitrage |
-|---|---|---|
-| **Search space** | Combinatorial over ticker pairs | One PCA pass over the whole universe |
-| **Hedge** | Ad hoc, per pair | Tradable ETF proxies, fit once per stock |
-| **Output** | A cointegrated pair, or nothing | A ranked, explained residual for every stock |
-| **Explainability** | "The test passed" | Loadings + SHAP: "why this signal, why now" |
+A confidence model and **SHAP (SHapley Additive exPlanations)** layer then score and
+explain each candidate before any capital is committed — so every trade has a reason
+attached, not just a z-score.
 
 ## How it works
 
@@ -57,7 +91,7 @@ capital is committed — so every trade has a reason attached, not just a z-scor
 flowchart LR
     A[Hourly adjusted<br/>prices, full universe] --> B[PCA factor<br/>decomposition]
     B --> C[Map factors to<br/>tradable ETF proxies]
-    C --> D[Residual spread<br/>+ OU / half-life fit]
+    C --> D[Residual spread<br/>+ Ornstein-Uhlenbeck / half-life fit]
     D --> E[Signal<br/>z-score thresholds]
     E --> F[Backtest<br/>Sharpe / DD / hit-rate]
     E --> G[Confidence model<br/>+ SHAP explanation]
@@ -69,7 +103,7 @@ flowchart LR
 |---|---|
 | **Decompose** | PCA on standardized hourly returns across the universe; keep the top-k components (~50–70% of variance). |
 | **Map to proxies** | Regress each stock on liquid ETFs so exposures are tradable *and* interpretable. |
-| **Residual & OU** | Log-spread of stock vs. weighted proxies; fit an Ornstein–Uhlenbeck process for half-life and fit quality. |
+| **Residual & Ornstein-Uhlenbeck (OU) fit** | Log-spread of stock vs. weighted proxies; fit an Ornstein-Uhlenbeck process for half-life and fit quality. |
 | **Signal** | Enter/exit on residual z-score thresholds. |
 | **Backtest** | Look-ahead-safe fills; Sharpe, drawdown, hit-rate gates. |
 | **Explain** | LightGBM confidence classifier + SHAP over discovery-stage features. |
