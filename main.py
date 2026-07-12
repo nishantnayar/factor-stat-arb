@@ -5,9 +5,9 @@ and (2) start the long-running services (Prefect server, Streamlit UI, and the
 Prefect worker that runs scheduled data-ingestion flows).
 
     uv run main.py check              # run all preflight checks, exit non-zero on failure
-    uv run main.py up                 # checks, then start ALL services
+    uv run main.py up                 # checks, then start the running system
     uv run main.py up prefect         # start only the named service(s)
-    uv run main.py up worker          # ensure the work pool + deployment, run the worker
+    uv run main.py up docs            # opt-in: serve the mkdocs site (not in default up)
     uv run main.py up --skip-checks
 
 Services use this repo's isolated Prefect config (port 4201,
@@ -212,8 +212,11 @@ def _prefect_healthy(api_url: str) -> bool:
         return False
 
 
-# Known services and how to start them. `up` with no names starts all of these.
-SERVICES = ("prefect", "streamlit", "worker")
+# Services bare `up` starts (the running system). `docs` is opt-in - a docs
+# authoring server, only started when named explicitly (`up docs`).
+DEFAULT_SERVICES = ("prefect", "streamlit", "worker")
+ALL_SERVICES = (*DEFAULT_SERVICES, "docs")
+DOCS_PORT = "8000"
 
 
 def _start_prefect(env, s) -> "subprocess.Popen | None":  # noqa: F821
@@ -253,6 +256,7 @@ def _service_urls(s) -> dict:
         "prefect": prefect_ui,
         "streamlit": f"http://localhost:{STREAMLIT_PORT}",
         "worker": f"pool '{s.prefect_work_pool_data_ingestion}'",
+        "docs": f"http://localhost:{DOCS_PORT}",
     }
 
 
@@ -278,22 +282,29 @@ def _start_streamlit(env, s) -> "subprocess.Popen | None":  # noqa: F821
         env=env)
 
 
+def _start_docs(env, s) -> "subprocess.Popen | None":  # noqa: F821
+    import subprocess
+    print(f"[start] mkdocs (docs authoring) -> http://localhost:{DOCS_PORT}")
+    return subprocess.Popen(
+        ["mkdocs", "serve", "-a", f"localhost:{DOCS_PORT}"], env=env)
+
+
 def start_services(services: list[str]) -> int:
     import subprocess
 
     from scripts.run_prefect import build_env
     from src.config.settings import get_settings
 
-    names = services or list(SERVICES)  # empty -> all
-    unknown = [n for n in names if n not in SERVICES]
+    names = services or list(DEFAULT_SERVICES)  # empty -> default running system
+    unknown = [n for n in names if n not in ALL_SERVICES]
     if unknown:
-        print(f"Unknown service(s): {', '.join(unknown)}. Known: {', '.join(SERVICES)}")
+        print(f"Unknown service(s): {', '.join(unknown)}. Known: {', '.join(ALL_SERVICES)}")
         return 2
 
     s = get_settings()
     env = build_env()
     starters = {"prefect": _start_prefect, "streamlit": _start_streamlit,
-                "worker": _start_worker}
+                "worker": _start_worker, "docs": _start_docs}
     procs: list[tuple[str, subprocess.Popen]] = []
     for name in names:
         p = starters[name](env, s)
@@ -332,9 +343,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="factor-stat-arb entry point")
     sub = parser.add_subparsers(dest="command")
     sub.add_parser("check", help="run preflight validation checks only")
-    up = sub.add_parser("up", help="run checks, then start services (all by default)")
+    up = sub.add_parser("up", help="run checks, then start services")
     up.add_argument("services", nargs="*", metavar="SERVICE",
-                    help=f"which services to start (default: all - {', '.join(SERVICES)})")
+                    help=f"services to start (default: {', '.join(DEFAULT_SERVICES)}; "
+                         f"also available: {', '.join(set(ALL_SERVICES) - set(DEFAULT_SERVICES))})")
     up.add_argument("--skip-checks", action="store_true", help="skip preflight checks")
     args = parser.parse_args()
     _quiet_logs()
