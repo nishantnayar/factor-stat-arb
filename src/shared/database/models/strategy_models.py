@@ -43,7 +43,12 @@ if TYPE_CHECKING:
 
 # Basket ORMs live in basket_models.py and are re-exported here so existing imports
 # like ``from strategy_models import BasketRegistry`` keep working.
-from .basket_models import BasketRegistry, BasketSpread, BasketTrade
+from .basket_models import (
+    BasketBacktestRun,
+    BasketRegistry,
+    BasketSpread,
+    BasketTrade,
+)
 
 
 class PairRegistry(Base):
@@ -753,6 +758,7 @@ class HarmonicTrade(Base):
 
 __all__ = [
     "BacktestRun",
+    "BasketBacktestRun",
     "BasketRegistry",
     "BasketSpread",
     "BasketTrade",

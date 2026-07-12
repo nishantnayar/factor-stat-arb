@@ -5,7 +5,7 @@ Kept in a dedicated module so BasketRegistry is importable without loading
 the full pairs strategy_models graph (avoids circular / partial imports).
 """
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Optional
 
 from sqlalchemy import (
@@ -13,6 +13,7 @@ from sqlalchemy import (
     TIMESTAMP,
     BigInteger,
     Boolean,
+    Date,
     ForeignKey,
     Index,
     Integer,
@@ -123,6 +124,69 @@ class BasketRegistry(Base):
             ),
             "notes": self.notes,
         }
+
+
+class BasketBacktestRun(Base):
+    """
+    Historical backtest run results for factor-residual baskets.
+
+    Saved by FactorBacktestReport after each run. Mirrors BacktestRun
+    (strategy_models.py) but FK'd to basket_registry instead of
+    pair_registry, since basket ids are not pair ids.
+    Stores full equity curve and N-leg trade log as JSON for UI rendering.
+    passed_gate indicates whether the run met the deployment thresholds.
+    """
+
+    __tablename__ = "basket_backtest_run"
+    __table_args__ = (
+        Index("idx_basket_backtest_run_basket_date", "basket_id", "run_date"),
+        Index("idx_basket_backtest_run_passed", "passed_gate"),
+        {"schema": "strategy_engine"},
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    basket_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("strategy_engine.basket_registry.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    run_date: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), default=datetime.utcnow, nullable=False
+    )
+    start_date: Mapped[date] = mapped_column(Date, nullable=False)
+    end_date: Mapped[date] = mapped_column(Date, nullable=False)
+
+    entry_threshold: Mapped[float] = mapped_column(Numeric(5, 2), nullable=False)
+    exit_threshold: Mapped[float] = mapped_column(Numeric(5, 2), nullable=False)
+    stop_loss_threshold: Mapped[float] = mapped_column(Numeric(5, 2), nullable=False)
+    z_score_window: Mapped[int] = mapped_column(Integer, nullable=False)
+    initial_capital: Mapped[float] = mapped_column(Numeric(15, 2), nullable=False)
+    slippage_bps: Mapped[Optional[float]] = mapped_column(Numeric(6, 2), default=5.0)
+    commission_per_trade: Mapped[Optional[float]] = mapped_column(
+        Numeric(8, 2), default=0.0
+    )
+
+    total_return: Mapped[float] = mapped_column(Numeric(10, 4), nullable=False)
+    annualized_return: Mapped[float] = mapped_column(Numeric(10, 4), nullable=False)
+    sharpe_ratio: Mapped[float] = mapped_column(Numeric(10, 4), nullable=False)
+    max_drawdown: Mapped[float] = mapped_column(Numeric(10, 4), nullable=False)
+    win_rate: Mapped[float] = mapped_column(Numeric(6, 2), nullable=False)
+    profit_factor: Mapped[float] = mapped_column(Numeric(10, 4), nullable=False)
+    total_trades: Mapped[int] = mapped_column(Integer, nullable=False)
+    avg_hold_time_hours: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    kelly_fraction: Mapped[float] = mapped_column(Numeric(6, 4), nullable=False)
+    passed_gate: Mapped[bool] = mapped_column(Boolean, nullable=False)
+
+    equity_curve: Mapped[Optional[dict]] = mapped_column(JSON)
+    trade_log: Mapped[Optional[dict]] = mapped_column(JSON)
+    notes: Mapped[Optional[str]] = mapped_column(Text)
+
+    def __repr__(self) -> str:
+        return (
+            f"<BasketBacktestRun(id={self.id}, basket_id={self.basket_id}, "
+            f"passed_gate={self.passed_gate}, sharpe={self.sharpe_ratio})>"
+        )
 
 
 class BasketSpread(Base):
@@ -257,6 +321,7 @@ class BasketTrade(Base):
 
 __all__ = [
     "BasketRegistry",
+    "BasketBacktestRun",
     "BasketSpread",
     "BasketTrade",
 ]
