@@ -14,6 +14,7 @@ minimal_mistakes_skin: "dark"
 timezone: America/Chicago
 
 plugins:
+  - jekyll-remote-theme
   - jekyll-sitemap
   - jekyll-feed
   - jekyll-include-cache
