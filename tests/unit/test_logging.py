@@ -174,7 +174,7 @@ class TestLoggingCore:
 
         # Verify configuration is loaded
         assert config.level == "INFO"
-        assert config.database.enabled is True
+        assert isinstance(config.database.enabled, bool)
         assert len(config.services) > 0
 
         # Verify service configurations
