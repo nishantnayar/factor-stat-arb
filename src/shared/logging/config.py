@@ -193,6 +193,16 @@ def load_logging_config(config_path: Optional[str] = None) -> LoggingConfig:
             else:
                 config_data[key] = value
 
+    # Allow disabling database logging entirely (e.g. CI, environments with no DB)
+    log_database_enabled = os.getenv("LOG_DATABASE_ENABLED")
+    if log_database_enabled is not None:
+        config_data["database"]["enabled"] = log_database_enabled.lower() in (
+            "true",
+            "1",
+            "yes",
+            "on",
+        )
+
     # Convert services dict to ServiceLoggingConfig objects
     if "services" in config_data and isinstance(config_data["services"], dict):
         services_config = {}
