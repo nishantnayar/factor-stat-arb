@@ -199,3 +199,6 @@ cython_debug/
 
 # repo-local Prefect home (isolated profile/state)
 .prefect/
+
+# trained models (regenerate via scripts/train_confidence_model.py)
+/models/
