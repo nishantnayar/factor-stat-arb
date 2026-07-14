@@ -120,8 +120,9 @@ class FactorBacktestEngine:
     ):
         self.basket = basket
         self.symbols: List[str] = list(basket.symbols or [])
+        weights_by_symbol: Dict[str, float] = basket.hedge_weights or {}
         self.hedge_weights: List[float] = [
-            float(w) for w in (basket.hedge_weights or [])
+            float(weights_by_symbol[s]) for s in self.symbols
         ]
         self.start_date = start_date
         self.end_date = end_date

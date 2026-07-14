@@ -16,6 +16,22 @@ def _proxy_returns(n=500, seed=0) -> pd.DataFrame:
     )
 
 
+def _multi_sector_proxy_returns(n=500, seed=0) -> pd.DataFrame:
+    """Proxy frame with several independent sector ETFs, for tests that need
+    fit_symbol_auto to pick among more than one candidate second ETF."""
+    rng = np.random.default_rng(seed)
+    idx = pd.date_range("2026-01-01", periods=n, freq="h", tz="UTC")
+    return pd.DataFrame(
+        {
+            "SPY": rng.normal(0, 0.01, n),
+            "XLF": rng.normal(0, 0.012, n),
+            "XLK": rng.normal(0, 0.011, n),
+            "XLE": rng.normal(0, 0.013, n),
+        },
+        index=idx,
+    )
+
+
 @pytest.mark.unit
 class TestProxyMapper:
     def test_recovers_known_betas(self):
@@ -99,3 +115,72 @@ class TestProxyMapper:
         )
         fits = ProxyMapper(proxies).fit_universe(stocks, {"A": "Financial Services"})
         assert "A" in fits and fits["A"].r2 > 0.99
+
+    def test_adj_r2_matches_textbook_formula(self):
+        proxies = _proxy_returns()
+        y = (0.5 * proxies["SPY"] + 0.5 * proxies["XLF"]).rename("X") + 1e-4
+        fit = ProxyMapper(proxies).fit_symbol(y, proxies=["SPY", "XLF"])
+        n, p = fit.n_obs, len(fit.proxies)
+        expected = 1.0 - (1.0 - fit.r2) * (n - 1) / (n - p - 1)
+        assert np.isclose(fit.adj_r2, expected)
+        # adj_r2 is never higher than r2 for p >= 1
+        assert fit.adj_r2 <= fit.r2 + 1e-12
+
+    def test_adj_r2_penalizes_extra_proxies_at_equal_r2(self):
+        # Two fits with the same r2 but different proxy counts: adj_r2 must
+        # penalize the larger one, since raw r2 alone can't detect an
+        # uninformative extra regressor.
+        n = 500
+        r2 = 0.6
+        adj_r2_one_proxy = 1.0 - (1.0 - r2) * (n - 1) / (n - 1 - 1)
+        adj_r2_two_proxies = 1.0 - (1.0 - r2) * (n - 1) / (n - 2 - 1)
+        assert adj_r2_two_proxies < adj_r2_one_proxy
+
+    def test_best_second_sector_etf_picks_highest_correlation(self):
+        proxies = _multi_sector_proxy_returns()
+        # stock is mostly XLE-driven but sector-labeled Financial Services,
+        # so the "official" proxy (XLF) misses the real exposure
+        y = (0.1 * proxies["XLF"] + 0.8 * proxies["XLE"]).rename("X")
+        mapper = ProxyMapper(proxies)
+        second = mapper.best_second_sector_etf(y, exclude={"SPY", "XLF"})
+        assert second == "XLE"
+
+    def test_fit_symbol_auto_extends_when_gain_is_material(self):
+        proxies = _multi_sector_proxy_returns()
+        # true exposure spans two sectors; SPY+XLF alone fits poorly
+        y = (
+            0.1 * proxies["SPY"] + 0.15 * proxies["XLF"] + 0.7 * proxies["XLE"]
+        ).rename("X")
+        mapper = ProxyMapper(proxies)
+        fit = mapper.fit_symbol_auto(y, sector="Financial Services")
+        assert fit.extended is True
+        assert "XLE" in fit.proxies
+        assert len(fit.proxies) == 3
+
+    def test_fit_symbol_auto_keeps_base_when_gain_is_small(self):
+        proxies = _multi_sector_proxy_returns()
+        rng = np.random.default_rng(5)
+        # stock genuinely only depends on SPY+XLF; nothing else should help
+        y = (0.4 * proxies["SPY"] + 0.4 * proxies["XLF"]).rename("X") + rng.normal(
+            0, 1e-4, len(proxies)
+        )
+        mapper = ProxyMapper(proxies)
+        fit = mapper.fit_symbol_auto(y, sector="Financial Services")
+        assert fit.extended is False
+        assert fit.proxies == ["SPY", "XLF"]
+
+    def test_compare_proxy_sets_picks_best_and_skips_missing(self):
+        proxies = _proxy_returns()
+        y = (0.5 * proxies["SPY"] + 0.5 * proxies["XLF"]).rename("X")
+        mapper = ProxyMapper(proxies)
+        fits = mapper.compare_proxy_sets(
+            y,
+            {
+                "broad_only": ["SPY"],
+                "broad_plus_sector": ["SPY", "XLF"],
+                "missing_etf": ["XLE"],  # not in proxy_returns -> skipped
+            },
+        )
+        assert set(fits) == {"broad_only", "broad_plus_sector"}
+        best = max(fits, key=lambda n: fits[n].adj_r2)
+        assert best == "broad_plus_sector"

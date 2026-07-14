@@ -21,12 +21,17 @@ def _fake_basket(
     max_hold_hours=200.0,
     z_score_window=30,
 ):
-    """SimpleNamespace shaped like a BasketRegistry row (no DB instrumentation)."""
+    """SimpleNamespace shaped like a BasketRegistry row (no DB instrumentation).
+
+    hedge_weights is a {symbol: weight} dict in the real DB (JSON column), not
+    a positional list -- keep this fixture in that shape so tests catch
+    symbol/weight mismatches the way the real engine would.
+    """
     return SimpleNamespace(
         id=1,
         name="FSA_TEST",
         symbols=list(symbols),
-        hedge_weights=list(hedge_weights),
+        hedge_weights=dict(zip(symbols, hedge_weights)),
         entry_threshold=entry_threshold,
         exit_threshold=exit_threshold,
         stop_loss_threshold=stop_loss_threshold,

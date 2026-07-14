@@ -82,9 +82,17 @@ def build_candidate(
     max_half_life: float,
     max_allocation_pct: float,
 ) -> Optional[dict]:
-    """Evaluate one stock; return a registry-row dict or None if it fails a gate."""
+    """Evaluate one stock; return a registry-row dict or None if it fails a gate.
+
+    Proxy selection uses fit_symbol_auto: SPY + sector ETF, extended with one
+    extra sector ETF only if it materially improves adj_r2 (see proxy_mapper.py).
+    Extended fits are flagged in notes with "REVIEW: extended proxy set" so the
+    Streamlit Factor Lab can surface them for human review before activation --
+    the sector label was likely an incomplete description of the stock's
+    exposure, so the pick is worth a manual look, not a hard gate.
+    """
     try:
-        fit = mapper.fit_symbol(stock_returns, sector)
+        fit = mapper.fit_symbol_auto(stock_returns, sector)
     except ValueError:
         return None
     if fit.r2 < min_proxy_r2:
@@ -104,6 +112,7 @@ def build_candidate(
 
     weights = fit.basket_weights()  # {stock: 1, proxy: -beta, ...}
     betas_str = ", ".join(f"{k}={v:.2f}" for k, v in fit.betas.items())
+    review_tag = "REVIEW: extended proxy set | " if fit.extended else ""
     return {
         "name": f"FSA_{symbol}",
         "sector": sector,
@@ -118,7 +127,7 @@ def build_candidate(
         "max_hold_hours": round(ou.half_life * 3, 2),
         "max_allocation_pct": max_allocation_pct,
         "notes": (
-            f"factor residual | proxies={fit.proxies} | {betas_str} | "
+            f"{review_tag}factor residual | proxies={fit.proxies} | {betas_str} | "
             f"alpha={fit.alpha:.2e} | proxy_r2={fit.r2:.2f} | ou_hl={ou.half_life:.0f}h"
         ),
     }
